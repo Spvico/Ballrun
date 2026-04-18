@@ -52,6 +52,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 </head>
 <body>
 <canvas id="c"></canvas>
+<!-- AUDIO -->
+<audio id="bgm" loop preload="auto">
+  <source src="assets/audio/Pulsar - The Grey Room _ Density &amp; Time.mp3" type="audio/mpeg">
+</audio>
+<audio id="igm" loop preload="auto">
+  <source src="assets/audio/Tails, intouch - Baby Sweet (Tails Remix) [NCS Release].mp3" type="audio/mpeg">
+</audio>
 <div id="hud" class="h">
   <div class="htop">
     <div><div class="hl" id="hR">ROOM 0</div><div class="hl hlg" id="hC">$0</div></div>
@@ -71,6 +78,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="sr"><span>DARK MODE</span><button class="tog on" id="tDark"></button></div>
   <div class="sr"><span>CAMERA SENSITIVITY</span><input type="range" id="rS" min="0.4" max="4" step="0.1" value="1.5"></div>
   <div class="sr"><span>SENSITIVITY: <span id="sV">1.5</span></span></div><br>
+    <div class="sr"><span>MENU VOLUME</span><input type="range" id="rBGM" min="0" max="1" step="0.05" value="0.6"></div>
+  <div class="sr"><span>GAME VOLUME</span><input type="range" id="rIGM" min="0" max="1" step="0.05" value="0.55"></div>
   <button class="btn" id="bStB">BACK</button>
 </div>
 <div id="sSh" class="scr h"><div class="ptl">SHOP</div>
@@ -86,7 +95,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <button class="btn" id="bRA">PLAY AGAIN</button><button class="btn r" id="bGM">MAIN MENU</button>
 </div>
 
-<div id="tutOver" style="position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(12px,3vw,22px);z-index:18;padding:clamp(20px,5vw,40px)">
+<div id="tutOver" style="position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:clamp(12px,3vw,22px);z-index:18;padding:clamp(20px,5vw,40px)">
   <div style="font-size:clamp(1.4rem,5vw,2.2rem);font-weight:900;letter-spacing:.18em;color:var(--acc)">TUTORIAL</div>
   <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(.62rem,1.8vw,.88rem);color:var(--txt);text-align:center;line-height:2.1;max-width:min(480px,88vw)">
     Reach the highest room you could reach<br>
@@ -106,7 +115,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 // ============================================================
 const SK='br8s',CK='br8c';
 let sv={coins:0,ld:0,la:0,sp:0,mx:0};
-let cfg={dark:true,sens:1.5};
+let cfg={dark:true,sens:1.5,volBGM:0.6,volIGM:0.55};
 try{const d=JSON.parse(localStorage.getItem(SK));if(d)Object.assign(sv,d)}catch(e){}
 try{const d=JSON.parse(localStorage.getItem(CK));if(d)Object.assign(cfg,d)}catch(e){}
 const wSv=()=>{try{localStorage.setItem(SK,JSON.stringify(sv))}catch(e){}};
@@ -862,22 +871,28 @@ function startAfterTutorial(){
   document.getElementById('tutOver').style.display='none';
   showGameUI();
   running=true;paused=false;
+  stopBGM();
+  startIGM();
   lastTs=performance.now();raf=requestAnimationFrame(loop);
 }
 function endGame(){
   running=false;if(raf){cancelAnimationFrame(raf);raf=null}
   hideGameUI();
+  stopIGM();
+  playBGM();
   document.getElementById('gR').textContent=roomCount;
   document.getElementById('gC').textContent='$'+sesCoins;
   document.getElementById('gT').textContent='$'+sv.coins;
   showScr('sO');
 }
-function doPause(){paused=true;document.getElementById('po').classList.remove('h')}
-function doResume(){paused=false;lastTs=performance.now();document.getElementById('po').classList.add('h')}
+function doPause(){paused=true;document.getElementById('po').classList.remove('h');pauseIGM()}
+function doResume(){paused=false;lastTs=performance.now();document.getElementById('po').classList.add('h');resumeIGM()}
 function goMenu(){
   document.getElementById('po').classList.add('h');running=false;
   if(raf){cancelAnimationFrame(raf);raf=null}
   hideGameUI();
+  stopIGM();
+  playBGM();
   showScr('sM');
 }
 
@@ -924,7 +939,7 @@ function hideGameUI(){
 // ============================================================
 document.getElementById('bPlay').onclick=go;
 document.getElementById('bRA').onclick=go;
-document.getElementById('bGM').onclick=()=>showScr('sM');
+document.getElementById('bGM').onclick=()=>{stopIGM();playBGM();showScr('sM')};
 document.getElementById('tutClose').onclick=startAfterTutorial;
 
 document.getElementById('pb').onclick=doPause;
@@ -934,11 +949,15 @@ document.getElementById('bSet').onclick=()=>{
   document.getElementById('tDark').classList.toggle('on',cfg.dark);
   document.getElementById('rS').value=cfg.sens;
   document.getElementById('sV').textContent=cfg.sens.toFixed(1);
+  document.getElementById('rBGM').value=cfg.volBGM;
+  document.getElementById('rIGM').value=cfg.volIGM;
   showScr('sSt');
 };
 document.getElementById('bStB').onclick=()=>showScr('sM');
 document.getElementById('tDark').onclick=function(){cfg.dark=!cfg.dark;this.classList.toggle('on',cfg.dark);applyTheme();wCfg()};
 document.getElementById('rS').oninput=function(){cfg.sens=parseFloat(this.value);document.getElementById('sV').textContent=cfg.sens.toFixed(1);wCfg()};
+document.getElementById('rBGM').oninput=function(){cfg.volBGM=parseFloat(this.value);bgm.volume=cfg.volBGM;wCfg()};
+document.getElementById('rIGM').oninput=function(){cfg.volIGM=parseFloat(this.value);igm.volume=cfg.volIGM;wCfg()};
 function rfSh(){
   document.getElementById('shW').textContent=sv.coins;
   document.getElementById('ldL').textContent='LEVEL '+sv.ld;
@@ -957,8 +976,43 @@ document.getElementById('bLA').onclick=()=>{if(sv.coins>=3){sv.coins-=3;sv.la++;
 document.getElementById('bSP').onclick=()=>{if(sv.coins>=3&&sv.sp<100){sv.coins-=3;sv.sp++;wSv();rfSh()}};
 document.getElementById('bMX').onclick=()=>{if(sv.coins>=4){sv.coins-=4;sv.mx++;wSv();rfSh()}};
 
+
+// ============================================================
+// AUDIO
+// ============================================================
+const bgm=document.getElementById('bgm'); // menu music
+const igm=document.getElementById('igm'); // in-game music
+bgm.volume=cfg.volBGM;
+igm.volume=cfg.volIGM;
+
+function playBGM(){
+  if(bgm.paused){bgm.currentTime=bgm.currentTime||0;bgm.play().catch(()=>{})}
+}
+function stopBGM(){
+  bgm.pause();
+}
+function startIGM(){
+  igm.currentTime=0; // reset each session
+  igm.play().catch(()=>{});
+}
+function pauseIGM(){
+  igm.pause();
+}
+function resumeIGM(){
+  igm.play().catch(()=>{});
+}
+function stopIGM(){
+  igm.pause();
+  igm.currentTime=0;
+}
+
+// Start menu music as soon as user interacts (autoplay policy)
+document.addEventListener('click',()=>playBGM(),{once:true});
+document.addEventListener('touchstart',()=>playBGM(),{once:true});
+
 showScr('sM');
 </script>
+
 </body>
 </html>
 
