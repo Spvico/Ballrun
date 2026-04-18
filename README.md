@@ -6,6 +6,7 @@ Collect coins around the map for upgrades.
 
 ———————
 ———————
+———————
 
 Assets(audio) used in this game is NOT copyright. 
 
