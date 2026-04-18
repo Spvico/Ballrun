@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>BALL RUN</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#111118;--pan:#1a1a24;--brd:#2e2e44;--acc:#e8e8e8;--acc2:#ff6b35;--txt:#e0e0e8;--dim:#505060;--red:#ff2255;--gold:#c8a832}
+body.light{--bg:#f0f0f0;--pan:#e0e0e0;--brd:#b0b0b8;--acc:#222228;--acc2:#cc4400;--txt:#111118;--dim:#808090;--red:#cc1133;--gold:#886a00}
+body{background:var(--bg);color:var(--txt);font-family:'Orbitron',monospace;overflow:hidden;width:100vw;height:100vh;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{position:fixed;top:0;left:0;display:block;touch-action:none}
+.scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);z-index:20;padding:clamp(14px,3.5vw,28px);gap:clamp(8px,2vw,15px);overflow-y:auto}
+.scr.h{display:none}
+.ttl{font-size:clamp(2.6rem,11vw,5rem);font-weight:900;letter-spacing:.18em;color:var(--acc);animation:gl 2.8s ease-in-out infinite}
+.sub{font-family:'Share Tech Mono',monospace;font-size:clamp(.48rem,1.5vw,.72rem);color:var(--dim);letter-spacing:.28em;margin-top:-4px}
+@keyframes gl{0%,100%{text-shadow:0 0 8px rgba(220,220,220,.2)}50%{text-shadow:0 0 20px rgba(220,220,220,.45)}}
+.btn{font-family:'Orbitron',monospace;font-size:clamp(.62rem,1.9vw,.88rem);font-weight:700;letter-spacing:.1em;padding:clamp(9px,1.8vw,14px) clamp(20px,4.5vw,40px);border:2px solid var(--acc);background:transparent;color:var(--acc);cursor:pointer;border-radius:4px;transition:all .15s;min-width:clamp(148px,35vw,208px);text-align:center}
+.btn:hover,.btn:active{background:var(--acc);color:var(--bg)}
+.btn.r{border-color:var(--red);color:var(--red)}.btn.r:hover,.btn.r:active{background:var(--red);color:var(--bg)}
+.btn.g{border-color:var(--gold);color:var(--gold)}.btn.g:hover,.btn.g:active{background:var(--gold);color:var(--bg)}
+.ptl{font-size:clamp(.82rem,3vw,1.45rem);font-weight:900;color:var(--acc);letter-spacing:.2em;margin-bottom:2px}
+.sr{display:flex;align-items:center;justify-content:space-between;gap:clamp(8px,2.5vw,18px);width:100%;max-width:380px;font-size:clamp(.6rem,1.65vw,.8rem);font-family:'Share Tech Mono',monospace;color:var(--txt)}
+.tog{width:46px;height:22px;background:var(--dim);border-radius:11px;position:relative;cursor:pointer;border:none;transition:background .18s;flex-shrink:0}
+.tog.on{background:var(--acc)}.tog::after{content:'';position:absolute;width:16px;height:16px;background:var(--bg);border-radius:50%;top:3px;left:3px;transition:left .18s}.tog.on::after{left:27px}
+input[type=range]{-webkit-appearance:none;width:118px;height:3px;background:var(--dim);border-radius:2px;outline:none;flex-shrink:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--acc);border-radius:50%;cursor:pointer}
+.si{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;max-width:380px;padding:clamp(7px,1.7vw,10px);border:1px solid var(--brd);border-radius:6px;background:var(--pan);font-size:clamp(.55rem,1.55vw,.74rem);font-family:'Share Tech Mono',monospace}
+.sin{flex:1;min-width:0}.sn{color:var(--txt);font-weight:bold}.sd{color:var(--dim);font-size:.8em;margin-top:1px}.sl{color:var(--acc);font-size:.82em;margin-top:2px}
+.sb{font-family:'Orbitron',monospace;font-size:clamp(.5rem,1.25vw,.63rem);padding:5px 9px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;border-radius:3px;white-space:nowrap;transition:all .13s;flex-shrink:0}
+.sb:hover,.sb:active{background:var(--gold);color:var(--bg)}.sb:disabled{border-color:var(--dim);color:var(--dim);cursor:default;background:transparent}
+#hud{position:fixed;top:0;left:0;right:0;pointer-events:none;z-index:5;padding:clamp(6px,1.6vw,12px)}
+.htop{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.hl{font-family:'Share Tech Mono',monospace;font-size:clamp(.58rem,1.55vw,.78rem);color:var(--acc);line-height:1.6;white-space:nowrap}
+.hlg{color:var(--gold)}
+#anx{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding-top:1px}
+#anxL{font-family:'Share Tech Mono',monospace;font-size:clamp(.44rem,1.1vw,.58rem);color:var(--dim);letter-spacing:.12em}
+#anxT{width:100%;max-width:min(210px,36vw);height:clamp(4px,1vw,8px);background:var(--pan);border:1px solid var(--brd);border-radius:3px;overflow:hidden}
+#anxF{height:100%;width:100%;background:var(--acc2);transition:width .1s linear,background .25s;border-radius:3px}
+#pb{position:fixed;bottom:clamp(10px,2.4vw,18px);right:clamp(10px,2.4vw,18px);width:clamp(42px,8.5vw,52px);height:clamp(42px,8.5vw,52px);background:var(--pan);border:2px solid var(--acc);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:6;pointer-events:all;transition:all .15s;color:var(--acc)}
+#pb:hover,#pb:active{background:var(--acc);color:var(--bg)}
+#po{position:fixed;inset:0;background:rgba(0,0,0,.86);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;z-index:15}
+#po.h{display:none}
+.got{font-size:clamp(1.7rem,7.5vw,3.8rem);font-weight:900;color:var(--red);letter-spacing:.14em}
+.gos{font-family:'Share Tech Mono',monospace;font-size:clamp(.6rem,1.65vw,.83rem);color:var(--dim);text-align:center;line-height:2}
+.gos span{color:var(--acc)}
+
+
+
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud" class="h">
+  <div class="htop">
+    <div><div class="hl" id="hR">ROOM 0</div><div class="hl hlg" id="hC">$0</div></div>
+    <div id="anx"><div id="anxL">ANXIETY</div><div id="anxT"><div id="anxF"></div></div></div>
+    <div style="text-align:right"><div class="hl" id="hS">SPD x1.00</div></div>
+  </div>
+</div>
+<button id="pb" class="h" aria-label="Pause">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+    <rect x="1" y="1" width="5" height="14" rx="1.5"/><rect x="10" y="1" width="5" height="14" rx="1.5"/>
+  </svg>
+</button>
+<div id="sM" class="scr"><div class="ttl">BALL RUN</div><div class="sub">INFINITE MAZE RUNNER</div><br>
+  <button class="btn" id="bPlay">PLAY</button><button class="btn g" id="bShop">SHOP</button><button class="btn" id="bSet">SETTINGS</button>
+</div>
+<div id="sSt" class="scr h"><div class="ptl">SETTINGS</div>
+  <div class="sr"><span>DARK MODE</span><button class="tog on" id="tDark"></button></div>
+  <div class="sr"><span>CAMERA SENSITIVITY</span><input type="range" id="rS" min="0.4" max="4" step="0.1" value="1.5"></div>
+  <div class="sr"><span>SENSITIVITY: <span id="sV">1.5</span></span></div><br>
+  <button class="btn" id="bStB">BACK</button>
+</div>
+<div id="sSh" class="scr h"><div class="ptl">SHOP</div>
+  <div class="sr" style="font-family:'Share Tech Mono',monospace;font-size:clamp(.7rem,1.9vw,.88rem);color:var(--gold);">WALLET: $<span id="shW">0</span></div>
+  <div class="si"><div class="sin"><div class="sn">LIGHT DISTANCE</div><div class="sd">Extends flashlight reach +0.1% / level</div><div class="sl" id="ldL">LEVEL 0</div></div><button class="sb" id="bLD">$2</button></div>
+  <div class="si"><div class="sin"><div class="sn">LIGHT WIDTH</div><div class="sd">Widens flashlight cone +0.1% / level</div><div class="sl" id="laL">LEVEL 0</div></div><button class="sb" id="bLA">$3</button></div>
+  <div class="si"><div class="sin"><div class="sn">SPEED BOOST</div><div class="sd">Move faster +0.1% / level (max 100)</div><div class="sl" id="spL">LEVEL 0 / 100</div></div><button class="sb" id="bSP">$3</button></div>
+  <div class="si"><div class="sin"><div class="sn">MAX ANXIETY REFILL</div><div class="sd">Room clear refills +0.1% more per level</div><div class="sl" id="mxL">LEVEL 0</div></div><button class="sb" id="bMX">$4</button></div><br>
+  <button class="btn g" id="bShB">BACK</button>
+</div>
+<div id="sO" class="scr h"><div class="got">GAME OVER</div>
+  <div class="gos">ROOMS CLEARED: <span id="gR">0</span><br>COINS THIS RUN: <span id="gC">$0</span><br>TOTAL COINS: <span id="gT">$0</span></div>
+  <button class="btn" id="bRA">PLAY AGAIN</button><button class="btn r" id="bGM">MAIN MENU</button>
+</div>
+
+<div id="tutOver" style="position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(12px,3vw,22px);z-index:18;padding:clamp(20px,5vw,40px)">
+  <div style="font-size:clamp(1.4rem,5vw,2.2rem);font-weight:900;letter-spacing:.18em;color:var(--acc)">TUTORIAL</div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(.62rem,1.8vw,.88rem);color:var(--txt);text-align:center;line-height:2.1;max-width:min(480px,88vw)">
+    Reach the highest room you could reach<br>
+    Collect coins that appear around the map to buy upgrades<br>
+    You automatically run forward<br>
+    Swipe left or right to rotate your direction
+  </div>
+  <button class="btn" id="tutClose" style="margin-top:8px">START</button>
+</div>
+<div id="po" class="h"><div class="ptl">PAUSED</div>
+  <button class="btn" id="bRes">RESUME</button><button class="btn r" id="bPM">MAIN MENU</button>
+</div>
+
+<script>
+// ============================================================
+// SAVE / CONFIG
+// ============================================================
+const SK='br8s',CK='br8c';
+let sv={coins:0,ld:0,la:0,sp:0,mx:0};
+let cfg={dark:true,sens:1.5};
+try{const d=JSON.parse(localStorage.getItem(SK));if(d)Object.assign(sv,d)}catch(e){}
+try{const d=JSON.parse(localStorage.getItem(CK));if(d)Object.assign(cfg,d)}catch(e){}
+const wSv=()=>{try{localStorage.setItem(SK,JSON.stringify(sv))}catch(e){}};
+const wCfg=()=>{try{localStorage.setItem(CK,JSON.stringify(cfg))}catch(e){}};
+let isMobile='ontouchstart' in window;
+const applyTheme=()=>document.body.classList.toggle('light',!cfg.dark);
+applyTheme();
+
+// ============================================================
+// CANVAS
+// ============================================================
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+let W=0,H=0;
+const resize=()=>{W=C.width=innerWidth;H=C.height=innerHeight};
+resize();addEventListener('resize',resize);
+
+// ============================================================
+// FIXED GAME COLORS
+// ============================================================
+const COL={
+  bg:'#1a1208',
+  floor:'#2c2014',floorPlank:'#221808',
+  wall:'#686870',wallEdge:'#848490',
+  doorWood:'#8b4513',doorGrain:'#5a2e0a',doorLight:'#9e4f18',doorFrame:'#3e1a06',
+  coin:'#b08820',coinRim:'#806010',coinText:'#503808',
+};
+
+// ============================================================
+// WORLD CONSTANTS
+// ============================================================
+const BR = 11;            // ball radius
+const WT = 12;
+const G  = BR*2.6;        // gap half-width — full doorway = 6.4*BR
+// Room interior dimensions
+const RW = 88;
+const RH = 126;
+// Full room dimensions including walls
+const HW = RW + WT;
+const HH = RH + WT;
+
+// ============================================================
+// UPGRADES
+// ============================================================
+const getSpd  = ()=>300*(1+sv.sp*.001);
+const getLDist= ()=>100*(1+sv.ld*.001);
+const getLAng = ()=>Math.PI*.3*(1+sv.la*.001);
+const getMaxAnxRefill=()=>0.25*(1+sv.mx*.001);
+
+// ============================================================
+// MATH
+// ============================================================
+const rotPt=(x,y,a)=>{const c=Math.cos(a),s=Math.sin(a);return{x:x*c-y*s,y:x*s+y*c}};
+const ltow=(lx,ly,th,ox,oy)=>{const r=rotPt(lx,ly,th);return{x:ox+r.x,y:oy+r.y}};
+
+// ============================================================
+// WALL BUILDER
+// ============================================================
+function mkWall(lx,ly,lw,lh,theta,ox,oy){
+  const pts=[
+    ltow(lx,ly,theta,ox,oy),    ltow(lx+lw,ly,theta,ox,oy),
+    ltow(lx+lw,ly+lh,theta,ox,oy), ltow(lx,ly+lh,theta,ox,oy)
+  ];
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const p of pts){x0=Math.min(x0,p.x);y0=Math.min(y0,p.y);x1=Math.max(x1,p.x);y1=Math.max(y1,p.y)}
+  const segs=[];
+  for(let i=0;i<4;i++){const a=pts[i],b=pts[(i+1)%4];segs.push([a.x,a.y,b.x,b.y])}
+  return{pts,x0,y0,x1,y1,segs}
+}
+
+// ============================================================
+// ROOM DEFINITIONS
+// ============================================================
+// Local coordinate system:
+//   Origin (0,0) = entry point center = where the player enters.
+//   +Y = into the room (away from entry).
+//   -Y = toward exit (for straight rooms).
+//   Entry gap is always centered at x=0, y=0 (the room starts here).
+//   The room extends from y=0 (entry wall outer face) to y=-(RH*2+WT) in local space.
+//
+// SIMPLER MODEL:
+//   Entry wall is at local y=0 (outer face). Player enters moving in -Y direction.
+//   Room interior spans y from 0 to -2*RH. Walls are WT thick.
+//   Exit depends on room type.
+//
+// We'll use a cleaner model:
+//   Entry side = bottom in local. Entry gap at y=+RH (inner face of entry wall).
+//   Actually: entry outer wall at local y=+HH. Entry inner face at y=+RH.
+//   Exit outer wall at local y=-HH for straight. Exit inner face at y=-RH.
+//   Player starts at (0, +HH) and moves toward -Y.
+//
+// The LOCAL ENTRY POINT is always (0, +HH) = where genX/genY are placed.
+// The LOCAL EXIT POINT for straight = (0, -HH).
+// For turn-left = (-HW, 0). For turn-right = (HW, 0).
+//
+// Each room layout is defined as a function returning wall rects [lx,ly,lw,lh].
+// Coordinates: x goes left(-) to right(+), y goes top(-) to bottom(+) in local.
+// Room spans: x in [-HW, HW], y in [-HH, HH].
+// Interior spans: x in [-RW, RW], y in [-RH, RH].
+
+// Shorthand wall helpers used in definitions:
+// Outer walls for STRAIGHT rooms (entry gap bottom-center, exit gap top-center):
+function straightOuterWalls(extraSolidBottom=false){
+  const walls=[];
+  walls.push([-HW,-HH, WT, HH*2]);          // left outer wall (full height)
+  walls.push([RW, -HH, WT, HH*2]);           // right outer wall (full height)
+  walls.push([-HW,-HH, RW-G, WT]);           // top wall left of exit gap
+  walls.push([G,  -HH, RW-G, WT]);           // top wall right of exit gap
+  if(extraSolidBottom){
+    walls.push([-HW, RH, HW*2, WT]);         // solid bottom (start room)
+  } else {
+    walls.push([-HW, RH, RW-G, WT]);         // bottom wall left of entry gap
+    walls.push([G,   RH, RW-G, WT]);         // bottom wall right of entry gap
+  }
+  return walls;
+}
+
+// 9 room layout definitions. Each returns {walls:[[lx,ly,lw,lh],...], exitLocalX, exitLocalY, isLeftTurn, isRightTurn, coins:[[lx,ly],...]}
+// Wall rects are in local space. Outer boundary walls are included.
+// 'mirrored' variant (for types 5,6,9): flip x signs.
+
+// Helper: thick inner wall segment
+// Pillars/obstacles use wall color (same as boundary walls, as requested).
+
+// LAYOUT 1 (index 0): Two inner vertical pillars creating 3 lanes.
+// Entry bottom-center, exit top-center. Straight.
+// Two tall vertical pillars side by side forcing left/center/right lanes.
+function layout1(mirror=false){
+  const m=mirror?-1:1;
+  const pw=WT*1.2, ph=RH*1.1;
+  const walls=straightOuterWalls();
+  // Left pillar: x = -RW*0.35 - pw/2
+  walls.push([-pw*0.5 - RW*0.38, -ph/2, pw, ph]);
+  walls.push([-pw*0.5 + RW*0.38, -ph/2, pw, ph]);
+  return{walls, coins:[[-RW*.7,-RH*.5],[0,-RH*.5],[RW*.7,-RH*.5],[0,RH*.5]]};
+}
+
+// LAYOUT 2 (index 1): N-shape inner walls forcing S-curve.
+// Straight. Two vertical stubs — one from top on left, one from bottom on right.
+function layout2(){
+  const walls=straightOuterWalls();
+  const sw=WT, sh=RH*1.15;
+  // Left vertical stub from top, doesn't reach bottom
+  walls.push([-RW*.35, -RH, sw, sh]);
+  // Right vertical stub from bottom, doesn't reach top
+  walls.push([RW*.35-sw, -sh+RH, sw, sh]);
+  return{walls, coins:[[-RW*.7,RH*.5],[RW*.7,-RH*.6],[0,0]]};
+}
+
+// LAYOUT 3 (index 2): H-shape obstacle — two verticals + horizontal bridge.
+// Straight.
+function layout3(){
+  const walls=straightOuterWalls();
+  const vw=WT, vh=RH*0.9;
+  const hh2=WT, hw2=RW*0.72;
+  const vx1=-RW*.38, vx2=RW*.38-vw;
+  walls.push([vx1, -vh*.45, vw, vh]);   // left vertical of H
+  walls.push([vx2, -vh*.45, vw, vh]);   // right vertical of H
+  walls.push([vx1, -WT/2, hw2, hh2]);   // horizontal bridge of H
+  return{walls, coins:[[-RW*.7,-RH*.6],[RW*.7,-RH*.6],[0,RH*.55]]};
+}
+
+// LAYOUT 4 (index 3): E/comb — three horizontal bars from left wall with gaps on right.
+// Straight.
+function layout4(){
+  const walls=straightOuterWalls();
+  const bw=RW*.65, bh=WT;
+  walls.push([-HW+WT, -RH*.55, bw, bh]);  // top bar
+  walls.push([-HW+WT,  0,       bw, bh]);  // middle bar
+  walls.push([-HW+WT,  RH*.55, bw, bh]);  // bottom bar
+  return{walls, coins:[[RW*.7,-RH*.7],[RW*.7,0],[RW*.7,RH*.65]]};
+}
+
+// LAYOUT 5 (index 4): G-shape / large C with inner shelf. Turn room.
+// Entry bottom-center, exit LEFT (x=-HW, y=0). mirrored=exit RIGHT.
+function layout5(mirror=false){
+  const m=mirror?-1:1;
+  const walls=[];
+  // Outer boundary for a turn-left room:
+  walls.push([-HW,-HH, WT, HH-G]);           // left wall top (exit gap here for turn-left)
+  walls.push([-HW,  G, WT, HH-G]);            // left wall bottom
+  walls.push([RW,  -HH, WT, HH*2]);           // right wall full
+  walls.push([-HW, -HH, HW*2, WT]);           // top wall full
+  walls.push([-HW,  RH, RW-G, WT]);           // bottom left of entry gap
+  walls.push([G,    RH, RW-G, WT]);            // bottom right of entry gap
+  // Inner dead-zone fill (top-left quadrant) — solid block
+  walls.push([-HW+WT, -HH+WT, RW-G-WT*0.5, RH-G-WT*0.5]);
+  // Inner shelf (the G's inner bar): horizontal bar in the top area of the live corridor
+  walls.push([-G-WT*4, -RH*.55, WT*4.5, WT]);
+  // Apply mirror: if mirror, flip all x coords
+  const finalWalls = mirror ? walls.map(([lx,ly,lw,lh])=>[-lx-lw,ly,lw,lh]) : walls;
+  const exitLX = mirror ? HW : -HW;
+  const coins = mirror
+    ? [[RW*.6,-RH*.7],[-RW*.6,-RH*.7],[-RW*.6,RH*.55]]
+    : [[-RW*.6,-RH*.7],[RW*.6,-RH*.7],[RW*.6,RH*.55]];
+  return{walls:finalWalls, exitLocalX:exitLX, exitLocalY:0, isLeftTurn:!mirror, isRightTurn:mirror, coins};
+}
+
+// LAYOUT 6 (index 5): F-shape — multiple horizontal bars from one side. Turn room.
+// Entry bottom-center, exit RIGHT (x=HW, y=0). mirrored=exit LEFT.
+function layout6(mirror=false){
+  const walls=[];
+  // Turn-right outer boundary:
+  walls.push([RW,  -HH, WT, HH-G]);           // right wall top (exit gap)
+  walls.push([RW,   G,  WT, HH-G]);            // right wall bottom
+  walls.push([-HW,-HH, WT, HH*2]);            // left wall full
+  walls.push([-HW,-HH, HW*2, WT]);            // top wall full
+  walls.push([-HW, RH, RW-G, WT]);            // bottom left of entry gap
+  walls.push([G,   RH, RW-G, WT]);            // bottom right of entry gap
+  // Inner corner fill (top-right dead zone)
+  walls.push([G, -HH+WT, RW-G-WT*0.5, RH-G-WT*0.5]);
+  // F-bars: two horizontal bars from left into the live zone but with gap on right
+  const bw=RW*0.6, bh=WT;
+  walls.push([-HW+WT, -RH*.5, bw, bh]);  // upper F bar
+  walls.push([-HW+WT, -RH*.0, bw, bh]);  // lower F bar (above center)
+  // Apply mirror
+  const finalWalls = mirror ? walls.map(([lx,ly,lw,lh])=>[-lx-lw,ly,lw,lh]) : walls;
+  const exitLX = mirror ? -HW : HW;
+  const coins = mirror
+    ? [[-RW*.7,-RH*.7],[RW*.7,-RH*.4],[RW*.7,RH*.55]]
+    : [[RW*.7,-RH*.7],[-RW*.7,-RH*.4],[-RW*.7,RH*.55]];
+  return{walls:finalWalls, exitLocalX:exitLX, exitLocalY:0, isLeftTurn:mirror, isRightTurn:!mirror, coins};
+}
+
+// LAYOUT 7 (index 6): Z/zigzag path — walls force player to weave.
+// Straight. Two overlapping horizontal barriers from opposite sides.
+function layout7(){
+  const walls=straightOuterWalls();
+  const bw=RW+G*0.6, bh=WT; // each bar extends more than halfway across
+  // Top barrier from left (leaves gap on right)
+  walls.push([-HW+WT, -RH*.35, bw, bh]);
+  // Bottom barrier from right (leaves gap on left)
+  walls.push([G+WT*0.5, RH*.1, bw, bh]);
+  return{walls, coins:[[RW*.7,-RH*.7],[-RW*.7,0],[RW*.7,RH*.65]]};
+}
+
+// LAYOUT 8 (index 7): T/comb from both sides — horizontal stubs from left AND right.
+// Straight.
+function layout8(){
+  const walls=straightOuterWalls();
+  const bw=RW*.5, bh=WT;
+  walls.push([-HW+WT, -RH*.45, bw, bh]);   // left stub upper
+  walls.push([HW-WT-bw, RH*.1, bw, bh]);    // right stub lower
+  walls.push([-HW+WT,   RH*.55, bw, bh]);   // left stub lower
+  return{walls, coins:[[RW*.7,-RH*.6],[-RW*.7,0],[RW*.7,RH*.65]]};
+}
+
+// LAYOUT 9 (index 8): Double comb — vertical bars from top and bottom with gaps between.
+// Straight or LEFT/RIGHT exit. From image: entry left, exit right (or mirrored).
+// Re-reading image: looks like entry bottom, exit... actually from the image it seems
+// to be a straight-through room with horizontal dividers creating a tunnel-maze.
+// Using it as a straight room with vertical inner dividers.
+function layout9(mirror=false){
+  const walls=straightOuterWalls();
+  const vw=WT, vh1=RH*.7, vh2=RH*.65;
+  // Left vertical from top (doesn't reach bottom)
+  walls.push([-RW*.55, -RH, vw, vh1]);
+  // Right vertical from bottom (doesn't reach top)
+  walls.push([RW*.55-vw, RH-vh2, vw, vh2]);
+  // Center horizontal connector
+  walls.push([-RW*.55+vw, -WT/2, RW*1.1-vw*2, WT]);
+  const m=mirror;
+  return{walls, coins:[[-(m?-1:1)*RW*.7,-RH*.6],[(m?-1:1)*RW*.7,0],[0,RH*.6]]};
+}
+
+// ============================================================
+// ROOM TABLE
+// ============================================================
+// We define 11 room variants (9 base + 2 mirrors for layout 5 and 6).
+// Types 0-8 map to layouts 1-9.
+// Type 9 = layout5 mirrored, Type 10 = layout6 mirrored.
+// Sequence cycles through 0-10 in shuffled order.
+
+function getRoomDef(type){
+  switch(type){
+    case 0: return layout1();
+    case 1: return layout2();
+    case 2: return layout3();
+    case 3: return layout4();
+    case 4: return layout5(false);   // G-shape, exit left
+    case 5: return layout6(false);   // F-shape, exit right
+    case 6: return layout7();
+    case 7: return layout8();
+    case 8: return layout9(false);
+    case 9: return layout5(true);    // G mirrored, exit right
+    case 10:return layout6(true);    // F mirrored, exit left
+    default:return layout1();
+  }
+}
+
+// Types that are straight (exit top, local y=-HH)
+const STRAIGHT_TYPES=[0,1,2,3,6,7,8];
+// Types that exit left (local x=-HW, y=0)
+const TURN_LEFT_TYPES=[4,10];
+// Types that exit right (local x=+HW, y=0)
+const TURN_RIGHT_TYPES=[5,9];
+
+// Start room templates (solid bottom, no coins)
+// Reuse layout1,2,3 geometry but replace outer walls with solid bottom
+function getStartDef(variant){
+  // variant 0,1,2
+  let inner=[];
+  if(variant===1){
+    const pw=WT*1.2,ph=RH*1.1;
+    inner.push([-pw*0.5-RW*0.38,-ph/2,pw,ph]);
+    inner.push([-pw*0.5+RW*0.38,-ph/2,pw,ph]);
+  } else if(variant===2){
+    inner.push([-RW*.3, RH*.1, RW*.6, WT]);
+  }
+  const walls=[];
+  walls.push([-HW,-HH, WT, HH*2]);
+  walls.push([RW,  -HH, WT, HH*2]);
+  walls.push([-HW,-HH, RW-G, WT]);
+  walls.push([G,  -HH, RW-G, WT]);
+  walls.push([-HW, RH, HW*2, WT]); // solid bottom
+  walls.push(...inner);
+  return{walls, coins:[]};
+}
+
+// ============================================================
+// SESSION SEQUENCE
+// ============================================================
+// Straight types: 0,1,2,3,6,7,8 (7 total)
+// Turn types: 4,5,9,10 (4 total, 2 left + 2 right)
+// Pattern per cycle: S S T S S T (2 straights then 1 turn, repeat)
+// All shuffled each session.
+
+let roomSeq=[],roomSeqIdx=0;
+function shuffleSeq(){
+  const S=[0,1,2,3,6,7,8];
+  const T=[4,5,9,10];
+  for(let i=S.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[S[i],S[j]]=[S[j],S[i]]}
+  for(let i=T.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[T[i],T[j]]=[T[j],T[i]]}
+  const seq=[];let si=0,ti=0;
+  for(let i=0;i<24;i++){
+    if(i%3===2){seq.push(T[ti%T.length]);ti++}
+    else{seq.push(S[si%S.length]);si++}
+  }
+  roomSeq=seq;roomSeqIdx=0;
+}
+function nextType(){return roomSeq[roomSeqIdx++%roomSeq.length]}
+
+// ============================================================
+// ROOM + DOOR STATE
+// ============================================================
+let rooms=[],coins=[],doors=[];
+// genX, genY = world position of THIS room's entry point (outer wall center = player's current pos when entering)
+// genDir = world direction the player is moving when entering (direction they travel through the room)
+let genX=0,genY=0,genDir=-Math.PI/2;
+
+// ============================================================
+// BUILD A ROOM
+// ============================================================
+// KEY ALIGNMENT RULE:
+//   genX, genY = exit point of previous room = entry point of new room.
+//   theta = genDir + PI/2 transforms local coords to world.
+//   In local space, entry is at (0, +HH). So the room origin (ox,oy) in world must be:
+//     ox = genX - ltow(0,+HH, theta, 0,0).x = genX (since ltow(0,HH,theta,0,0) = rotPt(0,HH,theta))
+//   Wait: ltow(0,HH,theta,ox,oy) = {x:ox+rotPt(0,HH,theta).x, y:oy+rotPt(0,HH,theta).y}
+//   We want this to equal (genX, genY):
+//     ox = genX - rotPt(0,HH,theta).x
+//     oy = genY - rotPt(0,HH,theta).y
+//   This ensures the entry point (0,HH in local) maps exactly to (genX,genY) in world.
+
+function buildRoom(type){
+  // theta: rotates local space so local -Y aligns with genDir (player travel direction)
+  // local -Y -> world genDir means theta = genDir + PI/2
+  const theta = genDir + Math.PI/2;
+
+  // Calculate room origin so local (0,+HH) = (genX, genY) in world
+  const entryLocal = rotPt(0, HH, theta); // where (0,HH) maps in rotated space
+  const ox = genX - entryLocal.x;
+  const oy = genY - entryLocal.y;
+
+  const p = (lx,ly)=>ltow(lx,ly,theta,ox,oy);
+  const mw = (lx,ly,lw,lh)=>mkWall(lx,ly,lw,lh,theta,ox,oy);
+
+  const isStart = type<0;
+  const def = isStart ? getStartDef(-(type+1)) : getRoomDef(type);
+
+  const walls = def.walls.map(([lx,ly,lw,lh])=>mw(lx,ly,lw,lh));
+  const fl = [p(-HW,-HH),p(HW,-HH),p(HW,HH),p(-HW,HH)];
+
+  // Exit point in local space
+  let exitLX, exitLY, exitDir;
+  if(isStart || STRAIGHT_TYPES.includes(type)){
+    exitLX = 0;  exitLY = -HH;  exitDir = genDir;
+  } else if(TURN_LEFT_TYPES.includes(type) || def.isLeftTurn){
+    exitLX = -HW; exitLY = 0;   exitDir = genDir - Math.PI/2;
+  } else {
+    exitLX = HW;  exitLY = 0;   exitDir = genDir + Math.PI/2;
+  }
+  const exitW = p(exitLX, exitLY);
+
+  // Door: hinge at left edge of the opening (in local space at exit wall)
+  // For straight: exit at top (y=-HH). Opening centered at x=0. Hinge at x=-G, y=-HH.
+  // For turn-left: exit at left (x=-HW). Opening centered at y=0. Hinge at x=-HW, y=-G.
+  // For turn-right: exit at right (x=+HW). Opening at y=0. Hinge at x=HW, y=-G.
+  let hLX, hLY, doorLocalAngle;
+  if(isStart || STRAIGHT_TYPES.includes(type)){
+    hLX=-G; hLY=-HH; doorLocalAngle=0; // panel goes rightward (+x local)
+  } else if(TURN_LEFT_TYPES.includes(type) || def.isLeftTurn){
+    hLX=-HW; hLY=-G; doorLocalAngle=Math.PI/2; // panel goes downward (+y local)
+  } else {
+    hLX=HW; hLY=-G; doorLocalAngle=Math.PI/2;  // panel goes downward (+y local) -- will mirror below
+    // Actually for right turn, hinge at top of right opening, door goes right
+    // right opening: x=+HW, y from -G to +G. Hinge at (HW, -G). Panel goes +y direction.
+    doorLocalAngle=Math.PI/2;
+  }
+  const hingeW = p(hLX, hLY);
+  const worldClosed = doorLocalAngle + theta;
+  const worldOpen = worldClosed - Math.PI/2; // swing forward into next room
+
+  const room={type,walls,fl,exitX:exitW.x,exitY:exitW.y,exitDir,
+    passed:false,theta,ox,oy,
+    hingeWX:hingeW.x,hingeWY:hingeW.y,doorLen:G*2,
+    worldClosed,worldOpen,doorIdx:doors.length};
+  rooms.push(room);
+  doors.push({t:0,open:false});
+
+  // Advance generator to exit point
+  genX=exitW.x; genY=exitW.y; genDir=exitDir;
+
+  // Coins: max 1 per room, 50% chance to spawn
+  if(!isStart && Math.random()<0.5){
+    const spots=def.coins||[];
+    // Shuffle spots and pick first valid one
+    const sh=[...spots].sort(()=>Math.random()-.5);
+    for(const[lx,ly] of sh){
+      const wp=p(lx,ly);
+      if(!ptInAnyWall(wp.x,wp.y,walls,BR*.4)){
+        coins.push({x:wp.x,y:wp.y,r:BR*.22,got:false});
+        break; // only 1 coin per room
+      }
+    }
+  }
+  return room;
+}
+
+// ============================================================
+// COLLISION
+// ============================================================
+function ptInPoly(px,py,pts,tol=0){
+  for(let i=0;i<pts.length;i++){
+    const a=pts[i],b=pts[(i+1)%pts.length];
+    if((b.x-a.x)*(py-a.y)-(b.y-a.y)*(px-a.x)>tol)return false;
+  }return true;
+}
+function ptInAnyWall(px,py,ws,mg){
+  for(const wl of ws){
+    if(px<wl.x0-mg||px>wl.x1+mg||py<wl.y0-mg||py>wl.y1+mg)continue;
+    if(ptInPoly(px,py,wl.pts,mg))return true;
+  }return false;
+}
+function resolveBall(px,py,pr){
+  let x=px,y=py;
+  for(const rm of rooms){
+    for(const wl of rm.walls){
+      if(x<wl.x0-pr||x>wl.x1+pr||y<wl.y0-pr||y>wl.y1+pr)continue;
+      const r=satCircle(x,y,pr,wl.pts);x+=r.x;y+=r.y;
+    }
+  }return{x,y};
+}
+function satCircle(cx,cy,cr,pts){
+  let minO=1e9,rnx=0,rny=0;
+  const n=pts.length,axes=[];
+  for(let i=0;i<n;i++){
+    const a=pts[i],b=pts[(i+1)%n],ex=b.x-a.x,ey=b.y-a.y,L=Math.hypot(ex,ey)||1;
+    axes.push({x:ey/L,y:-ex/L});
+  }
+  let bd=1e9,bvx=0,bvy=0;
+  for(const v of pts){const d=(cx-v.x)**2+(cy-v.y)**2;if(d<bd){bd=d;bvx=cx-v.x;bvy=cy-v.y}}
+  const bl=Math.hypot(bvx,bvy)||1;axes.push({x:bvx/bl,y:bvy/bl});
+  for(const ax of axes){
+    let pMn=1e9,pMx=-1e9;
+    for(const v of pts){const p=ax.x*v.x+ax.y*v.y;pMn=Math.min(pMn,p);pMx=Math.max(pMx,p)}
+    const cp=ax.x*cx+ax.y*cy,o=Math.min(pMx,cp+cr)-Math.max(pMn,cp-cr);
+    if(o<=0)return{x:0,y:0};
+    if(o<minO){minO=o;const ctr=(pMn+pMx)*.5,s=cp<ctr?-1:1;rnx=ax.x*s;rny=ax.y*s}
+  }
+  return{x:rnx*minO,y:rny*minO};
+}
+
+// ============================================================
+// RAYCASTING
+// ============================================================
+function raySegT(ox,oy,rdx,rdy,ax,ay,bx,by){
+  const dx=bx-ax,dy=by-ay,dn=rdx*dy-rdy*dx;
+  if(Math.abs(dn)<1e-10)return Infinity;
+  const tx=ax-ox,ty=ay-oy,t=(tx*dy-ty*dx)/dn,s=(tx*rdy-ty*rdx)/dn;
+  return(t>=0&&s>=0&&s<=1)?t:Infinity;
+}
+function castRay(ox,oy,a,maxD){
+  const rdx=Math.cos(a),rdy=Math.sin(a);
+  let best=maxD;
+  for(const rm of rooms){
+    for(const wl of rm.walls){
+      if(ox>wl.x1+best||ox<wl.x0-best||oy>wl.y1+best||oy<wl.y0-best)continue;
+      for(const[ax,ay,bx,by]of wl.segs){const t=raySegT(ox,oy,rdx,rdy,ax,ay,bx,by);if(t<best)best=t}
+    }
+  }
+  return{x:ox+rdx*best,y:oy+rdy*best};
+}
+function buildLightPoly(ox,oy,cDir,cHalf,maxD){
+  const EPS=0.0004,ras=new Set();
+  ras.add(-cHalf);ras.add(cHalf);
+  for(const rm of rooms){
+    for(const wl of rm.walls){
+      for(const v of wl.pts){
+        let ra=Math.atan2(v.y-oy,v.x-ox)-cDir;
+        ra=((ra+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
+        if(ra>=-cHalf-.12&&ra<=cHalf+.12){
+          if(ra-EPS>=-cHalf)ras.add(ra-EPS);
+          ras.add(Math.max(-cHalf,Math.min(cHalf,ra)));
+          if(ra+EPS<=cHalf)ras.add(ra+EPS);
+        }
+      }
+    }
+  }
+  return[...ras].sort((a,b)=>a-b).map(ra=>castRay(ox,oy,cDir+ra,maxD));
+}
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let running=false,paused=false,raf=null,lastTs=0;
+let player={x:0,y:0};
+let cam={angle:0};
+let roomCount=0,sesCoins=0,anxiety=1,brightness=1;
+
+function initGame(){
+  rooms=[];coins=[];doors=[];
+  roomCount=0;sesCoins=0;anxiety=1;brightness=1;
+  cam.angle=0;swipe=0;
+  // Player starts at world origin (0,0). Entry direction = upward = -PI/2.
+  genX=0;genY=0;genDir=-Math.PI/2;
+  
+  shuffleSeq();
+  const startRoom=buildRoom(-(Math.floor(Math.random()*3)+1));
+  player.x=startRoom.ox;
+  player.y=startRoom.oy;
+  for(let i=0;i<5;i++)buildRoom(nextType());
+  hudUp();
+}
+
+// ============================================================
+// UPDATE
+// ============================================================
+let swipe=0;
+function update(dt){
+  cam.angle+=swipe;swipe=0;
+  const md=cam.angle-Math.PI/2,sp=getSpd();
+  let nx=player.x+Math.cos(md)*sp*dt,ny=player.y+Math.sin(md)*sp*dt;
+  const rp=resolveBall(nx,ny,BR);player.x=rp.x;player.y=rp.y;
+  anxiety=Math.max(0,anxiety-dt*.18);
+  if(anxiety<=0){endGame();return}
+  for(const co of coins){
+    if(co.got)continue;
+    if((player.x-co.x)**2+(player.y-co.y)**2<(BR+co.r)**2){co.got=true;sesCoins++;sv.coins++;wSv()}
+  }
+  for(const rm of rooms){
+    if(rm.passed)continue;
+    const d2=(player.x-rm.exitX)**2+(player.y-rm.exitY)**2;
+    if(d2<(G*1.8)**2){const d=doors[rm.doorIdx];if(d&&!d.open)d.open=true}
+    if(d2<(BR*3.2)**2){rm.passed=true;roomCount++;anxiety=Math.min(1,anxiety+0.25*(1+sv.mx*.001));brightness=Math.max(0.7,brightness-0.01)}
+  }
+  for(const d of doors){if(d.open&&d.t<1)d.t=Math.min(1,d.t+dt*3.8)}
+  while(rooms.filter(r=>!r.passed).length<5)buildRoom(nextType());
+  let pc=rooms.filter(r=>r.passed).length;
+  while(pc>3){const i=rooms.findIndex(r=>r.passed);if(i<0)break;rooms.splice(i,1);pc--}
+  if(coins.length>90)coins=coins.filter(c=>!c.got);
+  hudUp();
+}
+
+// ============================================================
+// HUD
+// ============================================================
+function hudUp(){
+  document.getElementById('hR').textContent='ROOM '+roomCount;
+  document.getElementById('hC').textContent='$'+sesCoins;
+  document.getElementById('hS').textContent='SPD x'+(1+sv.sp*.001).toFixed(2);
+  const f=document.getElementById('anxF');
+  f.style.width=(anxiety*100)+'%';
+  f.style.background=anxiety>.55?'var(--acc2)':anxiety>.28?'#ffaa00':'var(--red)';
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render(){
+  ctx.fillStyle=COL.bg;ctx.fillRect(0,0,W,H);
+  const sc=Math.min(W,H)/420,inv=1/sc;
+  ctx.save();
+  ctx.translate(W/2,H/2);ctx.scale(sc,sc);ctx.rotate(-cam.angle);ctx.translate(-player.x,-player.y);
+  for(const rm of rooms)drawFloor(rm,inv);
+  for(const rm of rooms)drawWalls(rm,inv);
+  for(const rm of rooms)drawDoor(rm,inv);
+  for(const co of coins)if(!co.got)drawCoin(co.x,co.y,co.r,inv);
+  drawBall(inv);
+  ctx.restore();
+  drawFlashlight(sc);
+}
+
+function drawFloor(rm,inv){
+  const fl=rm.fl,theta=rm.theta,ox=rm.ox,oy=rm.oy;
+  ctx.beginPath();ctx.moveTo(fl[0].x,fl[0].y);
+  for(let i=1;i<4;i++)ctx.lineTo(fl[i].x,fl[i].y);
+  ctx.closePath();ctx.fillStyle=COL.floor;ctx.fill();
+  ctx.strokeStyle=COL.floorPlank;ctx.lineWidth=inv*1.4;
+  const ps=BR*3;
+  for(let lx=-RW;lx<=RW;lx+=ps){
+    const a=ltow(lx,-RH,theta,ox,oy),b=ltow(lx,RH,theta,ox,oy);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+  }
+  for(let ly=-RH;ly<=RH;ly+=ps*1.5){
+    const a=ltow(-RW,ly,theta,ox,oy),b=ltow(RW,ly,theta,ox,oy);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+  }
+}
+
+function drawWalls(rm,inv){
+  ctx.lineWidth=inv*2;
+  for(const wl of rm.walls){
+    ctx.beginPath();ctx.moveTo(wl.pts[0].x,wl.pts[0].y);
+    for(let i=1;i<4;i++)ctx.lineTo(wl.pts[i].x,wl.pts[i].y);
+    ctx.closePath();
+    ctx.fillStyle=COL.wall;ctx.fill();
+    ctx.strokeStyle=COL.wallEdge;ctx.stroke();
+  }
+}
+
+function drawDoor(rm,inv){
+  const d=doors[rm.doorIdx];if(!d)return;
+  const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  const panelAngle=rm.worldClosed-ease(d.t)*(Math.PI/2);
+  const hx=rm.hingeWX,hy=rm.hingeWY,L=rm.doorLen,PW=WT*0.45;
+
+  // Door frame posts at each side of opening (static)
+  const fw=WT*0.4,fh=WT*0.72;
+  ctx.save();
+  ctx.translate(hx,hy);ctx.rotate(rm.worldClosed);
+  ctx.fillStyle=COL.doorFrame;
+  ctx.fillRect(-fw/2,-fh/2,fw,fh);    // hinge-side post
+  ctx.translate(L,0);
+  ctx.fillRect(-fw/2,-fh/2,fw,fh);    // far-side post
+  ctx.restore();
+
+  // Door panel
+  ctx.save();
+  ctx.translate(hx,hy);ctx.rotate(panelAngle);
+  const g=ctx.createLinearGradient(0,0,L,0);
+  g.addColorStop(0,COL.doorGrain);
+  g.addColorStop(0.2,COL.doorWood);
+  g.addColorStop(0.55,COL.doorLight);
+  g.addColorStop(0.85,COL.doorWood);
+  g.addColorStop(1,COL.doorGrain);
+  ctx.fillStyle=g;
+  ctx.fillRect(0,-PW/2,L,PW);
+  // Grain lines
+  ctx.strokeStyle=COL.doorGrain;ctx.lineWidth=inv*1.2;
+  for(let gx=L*.08;gx<L*.95;gx+=L*.14){
+    ctx.beginPath();ctx.moveTo(gx,-PW*.44);ctx.lineTo(gx,PW*.44);ctx.stroke();
+  }
+  ctx.strokeStyle=COL.doorFrame;ctx.lineWidth=inv*2.2;
+  ctx.strokeRect(0,-PW/2,L,PW);
+  ctx.restore();
+
+  // Hinge pin •
+  ctx.beginPath();ctx.arc(hx,hy,inv*4.5,0,Math.PI*2);
+  ctx.fillStyle=COL.doorFrame;ctx.fill();
+}
+
+function drawCoin(cx,cy,cr,inv){
+  ctx.beginPath();ctx.arc(cx,cy,cr,0,Math.PI*2);
+  ctx.fillStyle=COL.coin;ctx.fill();
+  ctx.strokeStyle=COL.coinRim;ctx.lineWidth=inv*2.2;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,cr*.62,0,Math.PI*2);
+  ctx.strokeStyle=COL.coinRim;ctx.lineWidth=inv*1;ctx.stroke();
+  ctx.fillStyle=COL.coinText;
+  ctx.font=`bold ${cr*.9}px Share Tech Mono,monospace`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('$',cx,cy+cr*.07);
+}
+
+function drawBall(inv){
+  const px=player.x,py=player.y,pr=BR,md=cam.angle-Math.PI/2;
+  ctx.beginPath();ctx.ellipse(px+pr*.18,py+pr*.22,pr*.8,pr*.44,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,.32)';ctx.fill();
+  const g=ctx.createRadialGradient(px-pr*.28,py-pr*.3,pr*.04,px,py,pr);
+  g.addColorStop(0,'#7ab4ff');g.addColorStop(.5,'#2055cc');g.addColorStop(1,'#091c66');
+  ctx.beginPath();ctx.arc(px,py,pr,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle='rgba(120,180,255,.6)';ctx.lineWidth=inv*2;ctx.stroke();
+  ctx.beginPath();ctx.ellipse(px-pr*.22,py-pr*.27,pr*.21,pr*.12,-.5,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,.26)';ctx.fill();
+  const fx=Math.cos(md),fy=Math.sin(md),rx=-fy,ry=fx;
+  const ef=pr*.3,es=pr*.31,er=pr*.17;
+  for(const s of[-1,1]){
+    const ex=px+fx*ef+rx*es*s,ey=py+fy*ef+ry*es*s;
+    ctx.beginPath();ctx.arc(ex,ey,er,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+    const ux=ex+fx*er*.38,uy=ey+fy*er*.38;
+    ctx.beginPath();ctx.arc(ux,uy,er*.52,0,Math.PI*2);ctx.fillStyle='#0a0a2a';ctx.fill();
+    ctx.beginPath();ctx.arc(ux-fx*er*.1-rx*er*.1,uy-fy*er*.1-ry*er*.1,er*.18,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.62)';ctx.fill();
+  }
+}
+
+function drawFlashlight(sc){
+  const sw=W/2,sh=H/2,ld=getLDist(),la=getLAng(),wDir=cam.angle-Math.PI/2;
+  const poly=buildLightPoly(player.x,player.y,wDir,la,ld);
+  const cosA=Math.cos(-cam.angle),sinA=Math.sin(-cam.angle);
+  const w2s=(wx,wy)=>{const dx=wx-player.x,dy=wy-player.y;return{x:sw+(dx*cosA-dy*sinA)*sc,y:sh+(dx*sinA+dy*cosA)*sc}};
+
+  const oc=new OffscreenCanvas(W,H);
+  const ow=oc.getContext('2d');
+  // Unlit area is ALWAYS fully black — no partial visibility outside the cone
+  ow.fillStyle='rgba(0,0,0,1)';
+  ow.fillRect(0,0,W,H);
+
+  if(poly.length>=2){
+    // Cut out ONLY the visible cone — brightness controls how much we cut (dim vs bright)
+    ow.globalCompositeOperation='destination-out';
+    const br=brightness,gradR=ld*sc;
+    const grad=ow.createRadialGradient(sw,sh,0,sw,sh,gradR);
+    grad.addColorStop(0,`rgba(255,255,255,${br})`);
+    grad.addColorStop(.55,`rgba(255,255,255,${br*.96})`);
+    grad.addColorStop(.83,`rgba(255,255,255,${br*.45})`);
+    grad.addColorStop(1,'rgba(255,255,255,0)');
+    ow.fillStyle=grad;
+    ow.beginPath();ow.moveTo(sw,sh);
+    for(const pt of poly){const s=w2s(pt.x,pt.y);ow.lineTo(s.x,s.y)}
+    ow.closePath();ow.fill();
+    // Tiny ambient right around the player so they're never in total darkness
+    const ar=BR*sc*0.85;
+    const ag=ow.createRadialGradient(sw,sh,0,sw,sh,ar);
+    ag.addColorStop(0,`rgba(255,255,255,${br*.4})`);
+    ag.addColorStop(1,'rgba(255,255,255,0)');
+    ow.fillStyle=ag;ow.beginPath();ow.arc(sw,sh,ar,0,Math.PI*2);ow.fill();
+  }
+  ctx.drawImage(oc,0,0);
+}
+
+// ============================================================
+// GAME FLOW
+// ============================================================
+function showScr(id){document.querySelectorAll('.scr').forEach(s=>s.classList.add('h'));document.getElementById('tutOver').style.display='none';if(id)document.getElementById(id).classList.remove('h')}
+function go(){
+  showScr(null);
+  document.getElementById('tutOver').style.display='flex';
+  // pre-init so the game is ready when tutorial closes
+  swipe=0;lastPtr=null;
+  initGame();
+}
+function startAfterTutorial(){
+  document.getElementById('tutOver').style.display='none';
+  showGameUI();
+  running=true;paused=false;
+  lastTs=performance.now();raf=requestAnimationFrame(loop);
+}
+function endGame(){
+  running=false;if(raf){cancelAnimationFrame(raf);raf=null}
+  hideGameUI();
+  document.getElementById('gR').textContent=roomCount;
+  document.getElementById('gC').textContent='$'+sesCoins;
+  document.getElementById('gT').textContent='$'+sv.coins;
+  showScr('sO');
+}
+function doPause(){paused=true;document.getElementById('po').classList.remove('h')}
+function doResume(){paused=false;lastTs=performance.now();document.getElementById('po').classList.add('h')}
+function goMenu(){
+  document.getElementById('po').classList.add('h');running=false;
+  if(raf){cancelAnimationFrame(raf);raf=null}
+  hideGameUI();
+  showScr('sM');
+}
+
+function loop(ts){
+  if(!running)return;
+  const dt=Math.min((ts-lastTs)/1000,.05);
+  lastTs=ts;
+  if(!paused){update(dt);render()}
+  raf=requestAnimationFrame(loop);
+}
+
+
+// ============================================================
+// INPUT
+// ============================================================
+let lastPtr=null;
+function ptrMove(x){
+  if(lastPtr===null){lastPtr=x;return}
+  swipe+=(x-lastPtr)/Math.min(W,H)*cfg.sens*5.5;lastPtr=x;
+}
+C.addEventListener('touchstart',e=>{e.preventDefault();if(e.touches.length===1)lastPtr=e.touches[0].clientX},{passive:false});
+C.addEventListener('touchmove',e=>{e.preventDefault();if(running&&!paused&&e.touches.length===1)ptrMove(e.touches[0].clientX)},{passive:false});
+C.addEventListener('touchend',e=>{e.preventDefault();lastPtr=null},{passive:false});
+C.addEventListener('touchcancel',e=>{e.preventDefault();lastPtr=null},{passive:false});
+let mh=false;
+C.addEventListener('mousedown',e=>{mh=true;lastPtr=e.clientX});
+C.addEventListener('mousemove',e=>{if(mh&&running&&!paused)ptrMove(e.clientX)});
+C.addEventListener('mouseup',()=>{mh=false;lastPtr=null});
+C.addEventListener('mouseleave',()=>{mh=false;lastPtr=null});
+
+
+function showGameUI(){
+  document.getElementById('hud').classList.remove('h');
+  document.getElementById('pb').classList.remove('h');
+}
+function hideGameUI(){
+  document.getElementById('hud').classList.add('h');
+  document.getElementById('pb').classList.add('h');
+  document.getElementById('tutOver').style.display='none';
+}
+
+// ============================================================
+// UI WIRING
+// ============================================================
+document.getElementById('bPlay').onclick=go;
+document.getElementById('bRA').onclick=go;
+document.getElementById('bGM').onclick=()=>showScr('sM');
+document.getElementById('tutClose').onclick=startAfterTutorial;
+
+document.getElementById('pb').onclick=doPause;
+document.getElementById('bRes').onclick=doResume;
+document.getElementById('bPM').onclick=goMenu;
+document.getElementById('bSet').onclick=()=>{
+  document.getElementById('tDark').classList.toggle('on',cfg.dark);
+  document.getElementById('rS').value=cfg.sens;
+  document.getElementById('sV').textContent=cfg.sens.toFixed(1);
+  showScr('sSt');
+};
+document.getElementById('bStB').onclick=()=>showScr('sM');
+document.getElementById('tDark').onclick=function(){cfg.dark=!cfg.dark;this.classList.toggle('on',cfg.dark);applyTheme();wCfg()};
+document.getElementById('rS').oninput=function(){cfg.sens=parseFloat(this.value);document.getElementById('sV').textContent=cfg.sens.toFixed(1);wCfg()};
+function rfSh(){
+  document.getElementById('shW').textContent=sv.coins;
+  document.getElementById('ldL').textContent='LEVEL '+sv.ld;
+  document.getElementById('laL').textContent='LEVEL '+sv.la;
+  document.getElementById('spL').textContent='LEVEL '+sv.sp+' / 100';
+  document.getElementById('bLD').disabled=sv.coins<2;
+  document.getElementById('bLA').disabled=sv.coins<3;
+  document.getElementById('bSP').disabled=sv.coins<3||sv.sp>=100;
+  document.getElementById('mxL').textContent='LEVEL '+sv.mx;
+  document.getElementById('bMX').disabled=sv.coins<4;
+}
+document.getElementById('bShop').onclick=()=>{rfSh();showScr('sSh')};
+document.getElementById('bShB').onclick=()=>showScr('sM');
+document.getElementById('bLD').onclick=()=>{if(sv.coins>=2){sv.coins-=2;sv.ld++;wSv();rfSh()}};
+document.getElementById('bLA').onclick=()=>{if(sv.coins>=3){sv.coins-=3;sv.la++;wSv();rfSh()}};
+document.getElementById('bSP').onclick=()=>{if(sv.coins>=3&&sv.sp<100){sv.coins-=3;sv.sp++;wSv();rfSh()}};
+document.getElementById('bMX').onclick=()=>{if(sv.coins>=4){sv.coins-=4;sv.mx++;wSv();rfSh()}};
+
+showScr('sM');
+</script>
+</body>
+</html>
+
