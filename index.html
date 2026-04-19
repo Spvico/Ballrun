@@ -72,7 +72,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   </svg>
 </button>
 <div id="sM" class="scr"><div class="ttl">BALL RUN</div><div class="sub">INFINITE MAZE RUNNER</div><br>
-  <button class="btn" id="bPlay">PLAY</button><button class="btn g" id="bShop">SHOP</button><button class="btn" id="bSet">SETTINGS</button>
+  <button class="btn" id="bPlay">PLAY</button><button class="btn g" id="bShop">SHOP</button><button class="btn" id="bStats">STATS</button><button class="btn" id="bSet">SETTINGS</button>
+</div>
+<div id="sStat" class="scr h"><div class="ptl">STATS</div>
+  <div class="sr"><span>BEST ROOMS</span><span id="stBR" style="color:var(--acc);font-family:'Share Tech Mono',monospace">0</span></div>
+  <div class="sr"><span>CURRENT COINS</span><span id="stCC" style="color:var(--gold);font-family:'Share Tech Mono',monospace">$0</span></div>
+  <div class="sr"><span>TOTAL COINS EARNED</span><span id="stTC" style="color:var(--gold);font-family:'Share Tech Mono',monospace">$0</span></div>
+  <div style="width:100%;max-width:380px;height:1px;background:var(--brd);margin:4px 0"></div>
+  <div class="sr"><span>LIGHT DISTANCE</span><span id="stLD" style="color:var(--acc);font-family:'Share Tech Mono',monospace">0</span></div>
+  <div class="sr"><span>LIGHT WIDTH</span><span id="stLA" style="color:var(--acc);font-family:'Share Tech Mono',monospace">0</span></div>
+  <div class="sr"><span>SPEED BOOST</span><span id="stSP" style="color:var(--acc);font-family:'Share Tech Mono',monospace">0</span></div>
+  <div class="sr"><span>MAX ANXIETY REFILL</span><span id="stMX" style="color:var(--acc);font-family:'Share Tech Mono',monospace">0</span></div><br>
+  <button class="btn" id="bStatB">BACK</button>
 </div>
 <div id="sSt" class="scr h"><div class="ptl">SETTINGS</div>
   <div class="sr"><span>DARK MODE</span><button class="tog on" id="tDark"></button></div>
@@ -80,6 +91,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="sr"><span>SENSITIVITY: <span id="sV">1.5</span></span></div><br>
     <div class="sr"><span>MENU VOLUME</span><input type="range" id="rBGM" min="0" max="1" step="0.05" value="0.6"></div>
   <div class="sr"><span>GAME VOLUME</span><input type="range" id="rIGM" min="0" max="1" step="0.05" value="0.55"></div>
+  <div class="sr"><span>ACTIVE SPEED CAP</span><input type="range" id="rSP" min="0" max="100" step="1" value="0"></div>
+  <div class="sr"><span id="spCapL">USING MAX: 0 LEVELS</span></div>
   <button class="btn" id="bStB">BACK</button>
 </div>
 <div id="sSh" class="scr h"><div class="ptl">SHOP</div>
@@ -91,7 +104,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <button class="btn g" id="bShB">BACK</button>
 </div>
 <div id="sO" class="scr h"><div class="got">GAME OVER</div>
-  <div class="gos">ROOMS CLEARED: <span id="gR">0</span><br>COINS THIS RUN: <span id="gC">$0</span><br>TOTAL COINS: <span id="gT">$0</span></div>
+  <div class="gos">ROOMS CLEARED: <span id="gR">0</span><br>BEST ROOMS: <span id="gBR">0</span><br>COINS THIS RUN: <span id="gC">$0</span><br>TOTAL COINS: <span id="gT">$0</span></div>
   <button class="btn" id="bRA">PLAY AGAIN</button><button class="btn r" id="bGM">MAIN MENU</button>
 </div>
 
@@ -106,6 +119,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <button class="btn" id="tutClose" style="margin-top:8px">START</button>
 </div>
 <div id="po" class="h"><div class="ptl">PAUSED</div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(.6rem,1.6vw,.8rem);color:var(--dim);text-align:center;line-height:2">CURRENT ROOM: <span id="poR" style="color:var(--acc)">0</span><br>BEST ROOMS: <span id="poBR" style="color:var(--acc)">0</span></div>
   <button class="btn" id="bRes">RESUME</button><button class="btn r" id="bPM">MAIN MENU</button>
 </div>
 
@@ -114,7 +128,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 // SAVE / CONFIG
 // ============================================================
 const SK='br8s',CK='br8c';
-let sv={coins:0,ld:0,la:0,sp:0,mx:0};
+let sv={coins:0,ld:0,la:0,sp:0,mx:0,bestRooms:0,totalCoins:0,spCap:0};
 let cfg={dark:true,sens:1.5,volBGM:0.6,volIGM:0.55};
 try{const d=JSON.parse(localStorage.getItem(SK));if(d)Object.assign(sv,d)}catch(e){}
 try{const d=JSON.parse(localStorage.getItem(CK));if(d)Object.assign(cfg,d)}catch(e){}
@@ -159,7 +173,7 @@ const HH = RH + WT;
 // ============================================================
 // UPGRADES
 // ============================================================
-const getSpd  = ()=>300*(1+sv.sp*.001);
+const getSpd  = ()=>{const lvl=sv.spCap>0?Math.min(sv.spCap,sv.sp):sv.sp;return 300*(1+lvl*.001)};
 const getLDist= ()=>100*(1+sv.ld*.001);
 const getLAng = ()=>Math.PI*.3*(1+sv.la*.001);
 const getMaxAnxRefill=()=>0.25*(1+sv.mx*.001);
@@ -673,7 +687,7 @@ function update(dt){
   if(anxiety<=0){endGame();return}
   for(const co of coins){
     if(co.got)continue;
-    if((player.x-co.x)**2+(player.y-co.y)**2<(BR+co.r)**2){co.got=true;sesCoins++;sv.coins++;wSv()}
+    if((player.x-co.x)**2+(player.y-co.y)**2<(BR+co.r)**2){co.got=true;sesCoins++;sv.coins++;sv.totalCoins++;wSv()}
   }
   for(const rm of rooms){
     if(rm.passed)continue;
@@ -880,12 +894,14 @@ function endGame(){
   hideGameUI();
   stopIGM();
   playBGM();
+  if(roomCount>sv.bestRooms){sv.bestRooms=roomCount;wSv()}
   document.getElementById('gR').textContent=roomCount;
+  document.getElementById('gBR').textContent=sv.bestRooms;
   document.getElementById('gC').textContent='$'+sesCoins;
   document.getElementById('gT').textContent='$'+sv.coins;
   showScr('sO');
 }
-function doPause(){paused=true;document.getElementById('po').classList.remove('h');pauseIGM()}
+function doPause(){paused=true;document.getElementById('po').classList.remove('h');pauseIGM();document.getElementById('poR').textContent=roomCount;document.getElementById('poBR').textContent=sv.bestRooms}
 function doResume(){paused=false;lastTs=performance.now();document.getElementById('po').classList.add('h');resumeIGM()}
 function goMenu(){
   document.getElementById('po').classList.add('h');running=false;
@@ -951,13 +967,38 @@ document.getElementById('bSet').onclick=()=>{
   document.getElementById('sV').textContent=cfg.sens.toFixed(1);
   document.getElementById('rBGM').value=cfg.volBGM;
   document.getElementById('rIGM').value=cfg.volIGM;
+  // Speed cap slider: max = sv.sp, disabled if sp=0
+  const rsp=document.getElementById('rSP');
+  rsp.max=sv.sp;
+  rsp.value=sv.spCap||sv.sp;
+  rsp.disabled=sv.sp===0;
+  const capVal=sv.spCap>0?sv.spCap:sv.sp;
+  document.getElementById('spCapL').textContent=sv.sp===0?'NO BOOST PURCHASED':'ACTIVE: '+capVal+' / '+sv.sp+' LEVELS';
   showScr('sSt');
 };
 document.getElementById('bStB').onclick=()=>showScr('sM');
+
+function rfStats(){
+  document.getElementById('stBR').textContent=sv.bestRooms;
+  document.getElementById('stCC').textContent='$'+sv.coins;
+  document.getElementById('stTC').textContent='$'+sv.totalCoins;
+  document.getElementById('stLD').textContent=sv.ld+' levels';
+  document.getElementById('stLA').textContent=sv.la+' levels';
+  document.getElementById('stSP').textContent=sv.sp+' levels';
+  document.getElementById('stMX').textContent=sv.mx+' levels';
+}
+document.getElementById('bStats').onclick=()=>{rfStats();showScr('sStat')};
+document.getElementById('bStatB').onclick=()=>showScr('sM');
+
 document.getElementById('tDark').onclick=function(){cfg.dark=!cfg.dark;this.classList.toggle('on',cfg.dark);applyTheme();wCfg()};
 document.getElementById('rS').oninput=function(){cfg.sens=parseFloat(this.value);document.getElementById('sV').textContent=cfg.sens.toFixed(1);wCfg()};
 document.getElementById('rBGM').oninput=function(){cfg.volBGM=parseFloat(this.value);bgm.volume=cfg.volBGM;wCfg()};
 document.getElementById('rIGM').oninput=function(){cfg.volIGM=parseFloat(this.value);igm.volume=cfg.volIGM;wCfg()};
+document.getElementById('rSP').oninput=function(){
+  sv.spCap=parseInt(this.value);wSv();
+  const capVal=sv.spCap>0?sv.spCap:sv.sp;
+  document.getElementById('spCapL').textContent='ACTIVE: '+capVal+' / '+sv.sp+' LEVELS';
+};
 function rfSh(){
   document.getElementById('shW').textContent=sv.coins;
   document.getElementById('ldL').textContent='LEVEL '+sv.ld;
