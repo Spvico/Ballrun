@@ -85,6 +85,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="sr"><span>MAX ANXIETY REFILL</span><span id="stMX" style="color:var(--acc);font-family:'Share Tech Mono',monospace">0</span></div><br>
   <button class="btn" id="bStatB">BACK</button>
 </div>
+<div id="sDbg" class="scr h">
+  <div class="ptl" style="color:#ff9900">DEBUG</div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(.5rem,1.3vw,.65rem);color:var(--dim);letter-spacing:.12em;margin-top:-6px">SPECIAL PLAYER ACCESS</div>
+  <div class="sr"><span>LIGHT DISTANCE LVL</span><input type="number" id="dLD" min="0" max="9999" style="width:70px;background:var(--pan);border:1px solid var(--brd);color:var(--acc);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.8rem"></div>
+  <div class="sr"><span>LIGHT WIDTH LVL</span><input type="number" id="dLA" min="0" max="9999" style="width:70px;background:var(--pan);border:1px solid var(--brd);color:var(--acc);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.8rem"></div>
+  <div class="sr"><span>SPEED BOOST LVL</span><input type="number" id="dSP" min="0" max="100" style="width:70px;background:var(--pan);border:1px solid var(--brd);color:var(--acc);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.8rem"></div>
+  <div class="sr"><span>MAX ANXIETY LVL</span><input type="number" id="dMX" min="0" max="9999" style="width:70px;background:var(--pan);border:1px solid var(--brd);color:var(--acc);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.8rem"></div>
+  <div class="sr"><span>CURRENT COINS</span><input type="number" id="dCC" min="0" style="width:70px;background:var(--pan);border:1px solid var(--brd);color:var(--gold);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.8rem"></div>
+  <div class="sr"><span>TOTAL COINS</span><input type="number" id="dTC" min="0" style="width:70px;background:var(--pan);border:1px solid var(--brd);color:var(--gold);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.8rem"></div>
+  <div class="sr"><span>BEST ROOMS</span><input type="number" id="dBR" min="0" style="width:70px;background:var(--pan);border:1px solid var(--brd);color:var(--acc);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.8rem"></div>
+  <div class="sr"><span>FULL BRIGHT</span><button class="tog" id="tFB"></button></div>
+  <div style="display:flex;gap:10px">
+    <button class="btn" id="dApply" style="min-width:0;padding:9px 20px;border-color:#ff9900;color:#ff9900">APPLY</button>
+    <button class="btn" id="dBack" style="min-width:0;padding:9px 20px">BACK</button>
+  </div>
+</div>
 <div id="sSt" class="scr h"><div class="ptl">SETTINGS</div>
   <div class="sr"><span>DARK MODE</span><button class="tog on" id="tDark"></button></div>
   <div class="sr"><span>CAMERA SENSITIVITY</span><input type="range" id="rS" min="0.4" max="4" step="0.1" value="1.5"></div>
@@ -93,7 +109,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="sr"><span>GAME VOLUME</span><input type="range" id="rIGM" min="0" max="1" step="0.05" value="0.55"></div>
   <div class="sr"><span>ACTIVE SPEED CAP</span><input type="range" id="rSP" min="0" max="100" step="1" value="0"></div>
   <div class="sr"><span id="spCapL">USING MAX: 0 LEVELS</span></div>
-  <button class="btn" id="bStB">BACK</button>
+  <div style="display:flex;gap:10px;justify-content:center">
+    <button class="btn" id="bStB">BACK</button>
+    <button class="btn" id="bDbgOpen" style="display:none;min-width:0;width:clamp(42px,8.5vw,52px);height:clamp(42px,8.5vw,52px);padding:0;border-radius:50%;border-color:#ff9900;color:#ff9900" title="Debug">D</button>
+  </div>
 </div>
 <div id="sSh" class="scr h"><div class="ptl">SHOP</div>
   <div class="sr" style="font-family:'Share Tech Mono',monospace;font-size:clamp(.7rem,1.9vw,.88rem);color:var(--gold);">WALLET: $<span id="shW">0</span></div>
@@ -128,11 +147,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 // SAVE / CONFIG
 // ============================================================
 const SK='br8s',CK='br8c';
-let sv={coins:0,ld:0,la:0,sp:0,mx:0,bestRooms:0,totalCoins:0,spCap:0};
-let cfg={dark:true,sens:1.5,volBGM:0.6,volIGM:0.55};
+let sv={coins:0,ld:0,la:0,sp:0,mx:0,bestRooms:0,totalCoins:0,spCap:0,special:false};
+let cfg={dark:true,sens:1.5,volBGM:0.6,volIGM:0.55,fullBright:false};
 try{const d=JSON.parse(localStorage.getItem(SK));if(d)Object.assign(sv,d)}catch(e){}
 try{const d=JSON.parse(localStorage.getItem(CK));if(d)Object.assign(cfg,d)}catch(e){}
-const wSv=()=>{try{localStorage.setItem(SK,JSON.stringify(sv))}catch(e){}};
+const wSv=()=>{
+  // Tag as SpecialPlayer if criteria met (ld>=1, sp>=3, totalCoins>=13, coins>=6) — permanent
+  if(!sv.special && sv.ld>=1 && sv.sp>=3 && sv.totalCoins>=13 && sv.coins>=6){
+    sv.special=true;
+  }
+  try{localStorage.setItem(SK,JSON.stringify(sv))}catch(e){}
+};
 const wCfg=()=>{try{localStorage.setItem(CK,JSON.stringify(cfg))}catch(e){}};
 let isMobile='ontouchstart' in window;
 const applyTheme=()=>document.body.classList.toggle('light',!cfg.dark);
@@ -836,6 +861,7 @@ function drawBall(inv){
 }
 
 function drawFlashlight(sc){
+  if(cfg.fullBright)return; // full bright mode
   const sw=W/2,sh=H/2,ld=getLDist(),la=getLAng(),wDir=cam.angle-Math.PI/2;
   const poly=buildLightPoly(player.x,player.y,wDir,la,ld);
   const cosA=Math.cos(-cam.angle),sinA=Math.sin(-cam.angle);
@@ -950,6 +976,48 @@ function hideGameUI(){
   document.getElementById('tutOver').style.display='none';
 }
 
+
+// ============================================================
+// DEBUG (SpecialPlayer only)
+// ============================================================
+function isSpecial(){return sv.special===true}
+
+function openDebug(){
+  document.getElementById('dLD').value=sv.ld;
+  document.getElementById('dLA').value=sv.la;
+  document.getElementById('dSP').value=sv.sp;
+  document.getElementById('dMX').value=sv.mx;
+  document.getElementById('dCC').value=sv.coins;
+  document.getElementById('dTC').value=sv.totalCoins;
+  document.getElementById('dBR').value=sv.bestRooms;
+  document.getElementById('tFB').classList.toggle('on',cfg.fullBright);
+  showScr('sDbg');
+}
+
+document.getElementById('dApply').onclick=()=>{
+  sv.ld=Math.max(0,parseInt(document.getElementById('dLD').value)||0);
+  sv.la=Math.max(0,parseInt(document.getElementById('dLA').value)||0);
+  sv.sp=Math.max(0,Math.min(100,parseInt(document.getElementById('dSP').value)||0));
+  sv.mx=Math.max(0,parseInt(document.getElementById('dMX').value)||0);
+  sv.coins=Math.max(0,parseInt(document.getElementById('dCC').value)||0);
+  sv.totalCoins=Math.max(0,parseInt(document.getElementById('dTC').value)||0);
+  sv.bestRooms=Math.max(0,parseInt(document.getElementById('dBR').value)||0);
+  wSv();
+  alert('Applied!');
+};
+document.getElementById('tFB').onclick=function(){
+  cfg.fullBright=!cfg.fullBright;
+  this.classList.toggle('on',cfg.fullBright);
+  wCfg();
+};
+document.getElementById('dBack').onclick=()=>showScr('sSt');
+document.getElementById('bDbgOpen').onclick=openDebug;
+
+// Show debug button in settings only if special
+function updateDebugVisibility(){
+  const btn=document.getElementById('bDbgOpen');
+  if(btn)btn.style.display=isSpecial()?'flex':'none';
+}
 // ============================================================
 // UI WIRING
 // ============================================================
@@ -962,6 +1030,7 @@ document.getElementById('pb').onclick=doPause;
 document.getElementById('bRes').onclick=doResume;
 document.getElementById('bPM').onclick=goMenu;
 document.getElementById('bSet').onclick=()=>{
+  updateDebugVisibility();
   document.getElementById('tDark').classList.toggle('on',cfg.dark);
   document.getElementById('rS').value=cfg.sens;
   document.getElementById('sV').textContent=cfg.sens.toFixed(1);
@@ -1051,6 +1120,7 @@ function stopIGM(){
 document.addEventListener('click',()=>playBGM(),{once:true});
 document.addEventListener('touchstart',()=>playBGM(),{once:true});
 
+updateDebugVisibility();
 showScr('sM');
 </script>
 
