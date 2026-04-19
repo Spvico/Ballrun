@@ -149,15 +149,30 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 const SK='br8s',CK='br8c';
 let sv={coins:0,ld:0,la:0,sp:0,mx:0,bestRooms:0,totalCoins:0,spCap:0,special:false};
 let cfg={dark:true,sens:1.5,volBGM:0.6,volIGM:0.55,fullBright:false};
+// Load from current key, then also check all old keys and take best values
+const OLD_KEYS=['br3s','br4s','br5s','br6s','br7s'];
 try{const d=JSON.parse(localStorage.getItem(SK));if(d)Object.assign(sv,d)}catch(e){}
+for(const ok of OLD_KEYS){
+  try{
+    const d=JSON.parse(localStorage.getItem(ok));
+    if(!d)continue;
+    // Merge: take highest numeric values, preserve special:true if either has it
+    if((d.coins||0)>sv.coins)sv.coins=d.coins;
+    if((d.ld||0)>sv.ld)sv.ld=d.ld;
+    if((d.la||0)>sv.la)sv.la=d.la;
+    if((d.sp||0)>sv.sp)sv.sp=d.sp;
+    if((d.mx||0)>sv.mx)sv.mx=d.mx;
+    if((d.bestRooms||0)>sv.bestRooms)sv.bestRooms=d.bestRooms;
+    if((d.totalCoins||0)>sv.totalCoins)sv.totalCoins=d.totalCoins;
+    if(d.special===true)sv.special=true;
+  }catch(e){}
+}
 try{const d=JSON.parse(localStorage.getItem(CK));if(d)Object.assign(cfg,d)}catch(e){}
-const wSv=()=>{
-  // Tag as SpecialPlayer if criteria met (ld>=1, sp>=3, totalCoins>=13, coins>=6) — permanent
-  if(!sv.special && sv.ld>=1 && sv.sp>=3 && sv.totalCoins>=13 && sv.coins>=6){
-    sv.special=true;
-  }
-  try{localStorage.setItem(SK,JSON.stringify(sv))}catch(e){}
-};
+// Retroactively tag SpecialPlayer on load if criteria met and not yet tagged
+if(!sv.special && sv.ld>=1 && sv.sp>=3 && sv.totalCoins>=13 && sv.coins>=6){
+  sv.special=true;
+}
+const wSv=()=>{try{localStorage.setItem(SK,JSON.stringify(sv))}catch(e){}};
 const wCfg=()=>{try{localStorage.setItem(CK,JSON.stringify(cfg))}catch(e){}};
 let isMobile='ontouchstart' in window;
 const applyTheme=()=>document.body.classList.toggle('light',!cfg.dark);
