@@ -92,7 +92,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="htop">
     <div><div class="hl" id="hR">ROOM 0</div><div class="hl hlg" id="hC">$0</div></div>
     <div id="anx"><div id="anxL">ANXIETY</div><div id="anxT"><div id="anxF"></div></div></div>
-    <div style="text-align:right"><div class="hl" id="hS">SPD x1.00</div></div>
+    <div style="text-align:right"><div class="hl" id="hS">SPD x1.00</div><div class="hl" id="hUL" style="color:#ff4444;font-size:clamp(.5rem,1.3vw,.68rem);display:none">UPGRADELESS</div></div>
   </div>
 </div>
 <button id="pb" class="h" aria-label="Pause">
@@ -190,7 +190,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <button class="btn g" id="bShB">BACK</button>
 </div>
 <div id="sO" class="scr h"><div class="got">GAME OVER</div>
-  <div class="gos">ROOMS CLEARED: <span id="gR">0</span><br>BEST ROOMS: <span id="gBR">0</span><br>COINS THIS RUN: <span id="gC">$0</span><br>TOTAL COINS: <span id="gT">$0</span></div>
+  <div class="gos">ROOMS CLEARED: <span id="gR">0</span><br>BEST ROOMS: <span id="gBR">0</span><br>COINS THIS RUN: <span id="gC">$0</span><br>TOTAL COINS: <span id="gT">$0</span></div><div id="goUL" style="font-family:'Share Tech Mono',monospace;font-size:clamp(.58rem,1.5vw,.75rem);color:#ff4444;display:none;letter-spacing:.12em;margin-top:2px">UPGRADELESS RUN</div>
   <button class="btn" id="bRA">PLAY AGAIN</button><button class="btn r" id="bGM">MAIN MENU</button>
 </div>
 
@@ -812,6 +812,7 @@ function hudUp(){
   document.getElementById('hR').textContent='ROOM '+roomCount;
   document.getElementById('hC').textContent='$'+sesCoins;
   document.getElementById('hS').textContent='SPD x'+(1+sv.sp*.001).toFixed(2);
+  document.getElementById('hUL').style.display=cfg.upgradeless?'block':'none';
   const f=document.getElementById('anxF');
   f.style.width=(anxiety*100)+'%';
   f.style.background=anxiety>.55?'var(--acc2)':anxiety>.28?'#ffaa00':'var(--red)';
@@ -1002,6 +1003,7 @@ function endGame(){
   document.getElementById('gBR').textContent=sv.bestRooms;
   document.getElementById('gC').textContent='$'+sesCoins;
   document.getElementById('gT').textContent='$'+sv.coins;
+  document.getElementById('goUL').style.display=cfg.upgradeless?'block':'none';
   showScr('sO');
 }
 function doPause(){paused=true;document.getElementById('po').classList.remove('h');pauseIGM();document.getElementById('poR').textContent=roomCount;document.getElementById('poBR').textContent=sv.bestRooms}
@@ -1142,7 +1144,7 @@ if(!cfg.usedCodes)cfg.usedCodes=[];
 
 const CODES={
   'JustGiveMeMyMoneh':{type:'coins',amount:33},
-  'jajUHntsgwjJwgKv': {type:'special'},
+  'jajUHntsgwjJwgKv': {type:'expired'},
 };
 
 let notifTimer=null;
@@ -1190,6 +1192,7 @@ function redeemFromSettings(){
   const def=CODES[val];
   if(!def){showNotif('INVALID CODE','fail');return}
   if(cfg.usedCodes.includes(val)){showNotif('CODE ALREADY REDEEMED','used');return}
+  if(def.type==='expired'){showNotif('CODE EXPIRED','used');return}
   cfg.usedCodes.push(val);wCfg();
   if(def.type==='coins'){sv.coins+=def.amount;sv.totalCoins+=def.amount;wSv();showNotif('CODE REDEEMED: +$'+def.amount+' COINS','ok');}
   else if(def.type==='special'){sv.special=true;wSv();updateDebugVisibility();showNotif('CODE REDEEMED: SPECIAL PLAYER UNLOCKED','ok');}
