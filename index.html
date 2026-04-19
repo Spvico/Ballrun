@@ -48,13 +48,42 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 
 
 
+
+#codeNotif.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#codeNotif.ok{border-color:#44cc88;color:#44cc88}
+#codeNotif.fail{border-color:var(--red);color:var(--red)}
+#codeNotif.used{border-color:var(--dim);color:var(--dim)}
+#codeInput:focus{border-color:var(--acc);outline:none}
+
+/* 3-way control toggle */
+#ctrlToggle{display:flex;border:2px solid var(--brd);border-radius:6px;overflow:hidden;flex-shrink:0}
+.ctrlOpt{font-family:'Share Tech Mono',monospace;font-size:clamp(.48rem,1.25vw,.62rem);
+  padding:5px 9px;cursor:pointer;border:none;background:transparent;
+  color:var(--dim);transition:background .15s,color .15s;white-space:nowrap}
+.ctrlOpt.active{background:var(--acc);color:var(--bg)}
+/* In-game rotation buttons (button mode) */
+#rotL,#rotR{position:fixed;bottom:clamp(10px,2.4vw,18px);
+  width:clamp(52px,10vw,64px);height:clamp(52px,10vw,64px);
+  background:var(--pan);border:2px solid var(--acc);border-radius:7px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  z-index:6;pointer-events:all;color:var(--acc);
+  font-size:clamp(1.1rem,3.5vw,1.5rem);user-select:none;-webkit-user-select:none;
+  touch-action:none;transition:background .12s}
+#rotL{left:clamp(10px,2.4vw,18px)}
+#rotR{left:calc(clamp(10px,2.4vw,18px)*2 + clamp(52px,10vw,64px))}
+#rotL:active,#rotR:active,#rotL.held,#rotR.held{background:var(--acc);color:var(--bg)}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<button id="rotL" class="h" aria-label="Rotate Left">&#60;</button>
+<button id="rotR" class="h" aria-label="Rotate Right">&#62;</button>
 <!-- AUDIO -->
 <audio id="bgm" loop preload="auto">
   <source src="assets/audio/Pulsar - The Grey Room _ Density &amp; Time.mp3" type="audio/mpeg">
+</audio>
+<audio id="ulm" loop preload="auto">
+  <source src="assets/audio/Slenderino, Tatsunoshin - On My Mind [NCS Release].mp3" type="audio/mpeg">
 </audio>
 <audio id="igm" loop preload="auto">
   <source src="assets/audio/Tails, intouch - Baby Sweet (Tails Remix) [NCS Release].mp3" type="audio/mpeg">
@@ -73,6 +102,27 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 </button>
 <div id="sM" class="scr"><div class="ttl">BALL RUN</div><div class="sub">INFINITE MAZE RUNNER</div><br>
   <button class="btn" id="bPlay">PLAY</button><button class="btn g" id="bShop">SHOP</button><button class="btn" id="bStats">STATS</button><button class="btn" id="bSet">SETTINGS</button>
+</div>
+<div id="sCodes" class="scr h">
+  <div class="ptl">CODES</div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(.55rem,1.4vw,.7rem);color:var(--dim);letter-spacing:.1em;margin-top:-4px">ENTER A CODE TO REDEEM REWARDS</div>
+  <div style="display:flex;gap:8px;width:100%;max-width:380px;margin-top:4px">
+    <input id="codeInput" type="text" placeholder="ENTER CODE"
+      style="flex:1;background:var(--pan);border:2px solid var(--brd);color:var(--txt);
+             font-family:'Share Tech Mono',monospace;font-size:clamp(.6rem,1.6vw,.8rem);
+             padding:clamp(8px,1.8vw,12px) 12px;border-radius:4px;outline:none;
+             letter-spacing:.08em;min-width:0;text-transform:none">
+    <button class="btn" id="bRedeem" style="min-width:0;padding:clamp(8px,1.8vw,12px) clamp(14px,3vw,22px);flex-shrink:0">REDEEM</button>
+  </div>
+  <button class="btn" id="bCodesB" style="margin-top:4px">BACK</button>
+</div>
+<!-- CODE NOTIFICATION -->
+<div id="codeNotif" style="position:fixed;top:clamp(60px,12vw,90px);left:50%;transform:translateX(-50%) translateY(-20px);
+  background:var(--pan);border:2px solid var(--acc);border-radius:8px;
+  padding:clamp(10px,2.5vw,16px) clamp(16px,4vw,28px);
+  font-family:'Share Tech Mono',monospace;font-size:clamp(.62rem,1.7vw,.82rem);
+  color:var(--txt);text-align:center;z-index:30;pointer-events:none;
+  opacity:0;transition:opacity .25s,transform .25s;white-space:nowrap;max-width:90vw">
 </div>
 <div id="sStat" class="scr h"><div class="ptl">STATS</div>
   <div class="sr"><span>BEST ROOMS</span><span id="stBR" style="color:var(--acc);font-family:'Share Tech Mono',monospace">0</span></div>
@@ -109,6 +159,23 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="sr"><span>GAME VOLUME</span><input type="range" id="rIGM" min="0" max="1" step="0.05" value="0.55"></div>
   <div class="sr"><span>ACTIVE SPEED CAP</span><input type="range" id="rSP" min="0" max="100" step="1" value="0"></div>
   <div class="sr"><span id="spCapL">USING MAX: 0 LEVELS</span></div>
+  <div class="sr"><span>ROTATION CONTROL</span>
+    <div id="ctrlToggle">
+      <button class="ctrlOpt active" data-ctrl="swipe">SWIPE</button>
+      <button class="ctrlOpt" data-ctrl="button">BUTTON</button>
+      <button class="ctrlOpt" data-ctrl="keyboard">KEYBOARD</button>
+    </div>
+  </div>
+  <div class="sr"><span>UPGRADELESS MODE</span><button class="tog" id="tUL"></button></div>
+  <div class="sr"><span style="font-size:.8em;color:var(--dim)">DISABLES ALL UPGRADES, TURNS BALL RED</span></div>
+  <div style="display:flex;gap:8px;width:100%;max-width:380px">
+    <input id="stCodeInput" type="text" placeholder="ENTER CODE"
+      style="flex:1;background:var(--pan);border:2px solid var(--brd);color:var(--txt);
+             font-family:'Share Tech Mono',monospace;font-size:clamp(.58rem,1.5vw,.75rem);
+             padding:clamp(7px,1.6vw,11px) 10px;border-radius:4px;outline:none;
+             letter-spacing:.06em;min-width:0">
+    <button class="btn" id="bStRedeem" style="min-width:0;padding:clamp(7px,1.6vw,11px) clamp(12px,2.5vw,18px);flex-shrink:0;font-size:clamp(.58rem,1.5vw,.75rem)">REDEEM</button>
+  </div>
   <div style="display:flex;gap:10px;justify-content:center">
     <button class="btn" id="bStB">BACK</button>
     <button class="btn" id="bDbgOpen" style="display:none;min-width:0;width:clamp(42px,8.5vw,52px);height:clamp(42px,8.5vw,52px);padding:0;border-radius:50%;border-color:#ff9900;color:#ff9900" title="Debug">D</button>
@@ -148,7 +215,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 // ============================================================
 const SK='br8s',CK='br8c';
 let sv={coins:0,ld:0,la:0,sp:0,mx:0,bestRooms:0,totalCoins:0,spCap:0,special:false};
-let cfg={dark:true,sens:1.5,volBGM:0.6,volIGM:0.55,fullBright:false};
+let cfg={dark:true,sens:1.5,volBGM:0.6,volIGM:0.55,fullBright:false,upgradeless:false,ctrl:'swipe'};
 // Load from current key, then check old keys and merge best values
 const OLD_KEYS=['br3s','br4s','br5s','br6s','br7s'];
 try{const d=JSON.parse(localStorage.getItem(SK));if(d)Object.assign(sv,d)}catch(e){}
@@ -208,10 +275,10 @@ const HH = RH + WT;
 // ============================================================
 // UPGRADES
 // ============================================================
-const getSpd  = ()=>{const lvl=sv.spCap>0?Math.min(sv.spCap,sv.sp):sv.sp;return 300*(1+lvl*.001)};
-const getLDist= ()=>100*(1+sv.ld*.001);
-const getLAng = ()=>Math.PI*.3*(1+sv.la*.001);
-const getMaxAnxRefill=()=>0.25*(1+sv.mx*.001);
+const getSpd  = ()=>{if(cfg.upgradeless)return 300;const lvl=sv.spCap>0?Math.min(sv.spCap,sv.sp):sv.sp;return 300*(1+lvl*.001)};
+const getLDist= ()=>cfg.upgradeless?100:100*(1+sv.ld*.001);
+const getLAng = ()=>cfg.upgradeless?Math.PI*.3:Math.PI*.3*(1+sv.la*.001);
+const getMaxAnxRefill=()=>cfg.upgradeless?0.25:0.25*(1+sv.mx*.001);
 
 // ============================================================
 // MATH
@@ -853,9 +920,9 @@ function drawBall(inv){
   ctx.beginPath();ctx.ellipse(px+pr*.18,py+pr*.22,pr*.8,pr*.44,0,0,Math.PI*2);
   ctx.fillStyle='rgba(0,0,0,.32)';ctx.fill();
   const g=ctx.createRadialGradient(px-pr*.28,py-pr*.3,pr*.04,px,py,pr);
-  g.addColorStop(0,'#7ab4ff');g.addColorStop(.5,'#2055cc');g.addColorStop(1,'#091c66');
+  if(cfg.upgradeless){g.addColorStop(0,'#ff7070');g.addColorStop(.5,'#cc1122');g.addColorStop(1,'#660008');}else{g.addColorStop(0,'#7ab4ff');g.addColorStop(.5,'#2055cc');g.addColorStop(1,'#091c66');}
   ctx.beginPath();ctx.arc(px,py,pr,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
-  ctx.strokeStyle='rgba(120,180,255,.6)';ctx.lineWidth=inv*2;ctx.stroke();
+  ctx.strokeStyle=cfg.upgradeless?'rgba(255,120,120,.6)':'rgba(120,180,255,.6)';ctx.lineWidth=inv*2;ctx.stroke();
   ctx.beginPath();ctx.ellipse(px-pr*.22,py-pr*.27,pr*.21,pr*.12,-.5,0,Math.PI*2);
   ctx.fillStyle='rgba(255,255,255,.26)';ctx.fill();
   const fx=Math.cos(md),fy=Math.sin(md),rx=-fy,ry=fx;
@@ -952,6 +1019,8 @@ function loop(ts){
   if(!running)return;
   const dt=Math.min((ts-lastTs)/1000,.05);
   lastTs=ts;
+  applyButtonRot(dt);
+  applyKeyboardRot(dt);
   if(!paused){update(dt);render()}
   raf=requestAnimationFrame(loop);
 }
@@ -961,7 +1030,9 @@ function loop(ts){
 // INPUT
 // ============================================================
 let lastPtr=null;
+// Swipe control (only active when ctrl==='swipe')
 function ptrMove(x){
+  if(cfg.ctrl!=='swipe')return;
   if(lastPtr===null){lastPtr=x;return}
   swipe+=(x-lastPtr)/Math.min(W,H)*cfg.sens*5.5;lastPtr=x;
 }
@@ -975,14 +1046,48 @@ C.addEventListener('mousemove',e=>{if(mh&&running&&!paused)ptrMove(e.clientX)});
 C.addEventListener('mouseup',()=>{mh=false;lastPtr=null});
 C.addEventListener('mouseleave',()=>{mh=false;lastPtr=null});
 
+// Button rotation (< >) — held state
+let rotLHeld=false,rotRHeld=false;
+const ROT_BTN_SPD=0.052;
+function applyButtonRot(dt){
+  if(cfg.ctrl!=='button')return;
+  if(rotLHeld&&running&&!paused)swipe-=ROT_BTN_SPD*cfg.sens*dt*60;
+  if(rotRHeld&&running&&!paused)swipe+=ROT_BTN_SPD*cfg.sens*dt*60;
+}
+function setupRotBtn(el,isLeft){
+  const dn=e=>{e.preventDefault();if(isLeft)rotLHeld=true;else rotRHeld=true;el.classList.add('held')};
+  const up=e=>{e.preventDefault();if(isLeft)rotLHeld=false;else rotRHeld=false;el.classList.remove('held')};
+  el.addEventListener('mousedown',dn);el.addEventListener('touchstart',dn,{passive:false});
+  el.addEventListener('mouseup',up);el.addEventListener('mouseleave',up);
+  el.addEventListener('touchend',up,{passive:false});el.addEventListener('touchcancel',up,{passive:false});
+}
+setupRotBtn(document.getElementById('rotL'),true);
+setupRotBtn(document.getElementById('rotR'),false);
+
+// Keyboard rotation (A/D / arrow keys) — only when ctrl==='keyboard'
+const keys={};
+addEventListener('keydown',e=>{keys[e.code]=true});
+addEventListener('keyup',e=>{keys[e.code]=false});
+function applyKeyboardRot(dt){
+  if(cfg.ctrl!=='keyboard')return;
+  if((keys['ArrowLeft']||keys['KeyA'])&&running&&!paused)swipe-=ROT_BTN_SPD*cfg.sens*dt*60;
+  if((keys['ArrowRight']||keys['KeyD'])&&running&&!paused)swipe+=ROT_BTN_SPD*cfg.sens*dt*60;
+}
+
 
 function showGameUI(){
   document.getElementById('hud').classList.remove('h');
   document.getElementById('pb').classList.remove('h');
+  // Show rotation buttons only in button mode
+  const bl=cfg.ctrl==='button';
+  document.getElementById('rotL').classList.toggle('h',!bl);
+  document.getElementById('rotR').classList.toggle('h',!bl);
 }
 function hideGameUI(){
   document.getElementById('hud').classList.add('h');
   document.getElementById('pb').classList.add('h');
+  document.getElementById('rotL').classList.add('h');
+  document.getElementById('rotR').classList.add('h');
   document.getElementById('tutOver').style.display='none';
 }
 
@@ -1028,6 +1133,67 @@ function updateDebugVisibility(){
   const btn=document.getElementById('bDbgOpen');
   if(btn)btn.style.display=isSpecial()?'flex':'none';
 }
+
+// ============================================================
+// CODE REDEMPTION
+// ============================================================
+// Redeemed codes stored in cfg so they persist
+if(!cfg.usedCodes)cfg.usedCodes=[];
+
+const CODES={
+  'JustGiveMeMyMoneh':{type:'coins',amount:33},
+  'jajUHntsgwjJwgKv': {type:'special'},
+};
+
+let notifTimer=null;
+function showNotif(msg,state){
+  const el=document.getElementById('codeNotif');
+  el.textContent=msg;
+  el.className='show '+state;
+  clearTimeout(notifTimer);
+  notifTimer=setTimeout(()=>{el.className=''},2800);
+}
+
+function redeemCode(){
+  const raw=document.getElementById('codeInput').value.trim();
+  document.getElementById('codeInput').value='';
+  if(!raw){showNotif('ENTER A CODE FIRST','fail');return}
+  const def=CODES[raw];
+  if(!def){showNotif('INVALID CODE','fail');return}
+  if(cfg.usedCodes.includes(raw)){showNotif('CODE ALREADY REDEEMED','used');return}
+  // Apply reward
+  cfg.usedCodes.push(raw);
+  wCfg();
+  if(def.type==='coins'){
+    sv.coins+=def.amount;
+    sv.totalCoins+=def.amount;
+    wSv();
+    showNotif('CODE REDEEMED: +$'+def.amount+' COINS','ok');
+  } else if(def.type==='special'){
+    sv.special=true;
+    wSv();
+    updateDebugVisibility();
+    showNotif('CODE REDEEMED: SPECIAL PLAYER UNLOCKED','ok');
+  }
+}
+
+document.getElementById('bCodesB').onclick=()=>showScr('sM');
+document.getElementById('bRedeem').onclick=redeemCode;
+document.getElementById('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')redeemCode()});
+document.getElementById('bStRedeem').onclick=()=>redeemFromSettings();
+document.getElementById('stCodeInput').addEventListener('keydown',e=>{if(e.key==='Enter')redeemFromSettings()});
+function redeemFromSettings(){
+  const val=document.getElementById('stCodeInput').value.trim();
+  // Temporarily copy to main input, run redeem, which clears it — but we use stCodeInput directly
+  document.getElementById('stCodeInput').value='';
+  if(!val){showNotif('ENTER A CODE FIRST','fail');return}
+  const def=CODES[val];
+  if(!def){showNotif('INVALID CODE','fail');return}
+  if(cfg.usedCodes.includes(val)){showNotif('CODE ALREADY REDEEMED','used');return}
+  cfg.usedCodes.push(val);wCfg();
+  if(def.type==='coins'){sv.coins+=def.amount;sv.totalCoins+=def.amount;wSv();showNotif('CODE REDEEMED: +$'+def.amount+' COINS','ok');}
+  else if(def.type==='special'){sv.special=true;wSv();updateDebugVisibility();showNotif('CODE REDEEMED: SPECIAL PLAYER UNLOCKED','ok');}
+}
 // ============================================================
 // UI WIRING
 // ============================================================
@@ -1041,6 +1207,9 @@ document.getElementById('bRes').onclick=doResume;
 document.getElementById('bPM').onclick=goMenu;
 document.getElementById('bSet').onclick=()=>{
   updateDebugVisibility();
+  document.getElementById('tUL').classList.toggle('on',cfg.upgradeless);
+  document.getElementById('stCodeInput').value='';
+  updateCtrlToggle();
   document.getElementById('tDark').classList.toggle('on',cfg.dark);
   document.getElementById('rS').value=cfg.sens;
   document.getElementById('sV').textContent=cfg.sens.toFixed(1);
@@ -1069,10 +1238,21 @@ function rfStats(){
 document.getElementById('bStats').onclick=()=>{rfStats();showScr('sStat')};
 document.getElementById('bStatB').onclick=()=>showScr('sM');
 
+
+// Ctrl toggle wiring
+function updateCtrlToggle(){
+  document.querySelectorAll('.ctrlOpt').forEach(b=>{
+    b.classList.toggle('active',b.dataset.ctrl===cfg.ctrl);
+  });
+}
+document.querySelectorAll('.ctrlOpt').forEach(b=>{
+  b.onclick=()=>{cfg.ctrl=b.dataset.ctrl;updateCtrlToggle();wCfg()};
+});
 document.getElementById('tDark').onclick=function(){cfg.dark=!cfg.dark;this.classList.toggle('on',cfg.dark);applyTheme();wCfg()};
+document.getElementById('tUL').onclick=function(){cfg.upgradeless=!cfg.upgradeless;this.classList.toggle('on',cfg.upgradeless);wCfg()};
 document.getElementById('rS').oninput=function(){cfg.sens=parseFloat(this.value);document.getElementById('sV').textContent=cfg.sens.toFixed(1);wCfg()};
 document.getElementById('rBGM').oninput=function(){cfg.volBGM=parseFloat(this.value);bgm.volume=cfg.volBGM;wCfg()};
-document.getElementById('rIGM').oninput=function(){cfg.volIGM=parseFloat(this.value);igm.volume=cfg.volIGM;wCfg()};
+document.getElementById('rIGM').oninput=function(){cfg.volIGM=parseFloat(this.value);igm.volume=cfg.volIGM;ulm.volume=cfg.volIGM;wCfg()};
 document.getElementById('rSP').oninput=function(){
   sv.spCap=parseInt(this.value);wSv();
   const capVal=sv.spCap>0?sv.spCap:sv.sp;
@@ -1101,9 +1281,13 @@ document.getElementById('bMX').onclick=()=>{if(sv.coins>=4){sv.coins-=4;sv.mx++;
 // AUDIO
 // ============================================================
 const bgm=document.getElementById('bgm'); // menu music
-const igm=document.getElementById('igm'); // in-game music
+const igm=document.getElementById('igm'); // normal in-game music
+const ulm=document.getElementById('ulm'); // upgradeless in-game music
 bgm.volume=cfg.volBGM;
 igm.volume=cfg.volIGM;
+ulm.volume=cfg.volIGM;
+// Keep ulm volume in sync with igm volume slider
+
 
 function playBGM(){
   if(bgm.paused){bgm.currentTime=bgm.currentTime||0;bgm.play().catch(()=>{})}
@@ -1111,19 +1295,24 @@ function playBGM(){
 function stopBGM(){
   bgm.pause();
 }
+function activeIGM(){return cfg.upgradeless?ulm:igm;}
 function startIGM(){
-  igm.currentTime=0; // reset each session
-  igm.play().catch(()=>{});
+  // Stop both tracks first
+  igm.pause();igm.currentTime=0;
+  ulm.pause();ulm.currentTime=0;
+  const t=activeIGM();
+  t.currentTime=0;
+  t.play().catch(()=>{});
 }
 function pauseIGM(){
-  igm.pause();
+  igm.pause();ulm.pause();
 }
 function resumeIGM(){
-  igm.play().catch(()=>{});
+  activeIGM().play().catch(()=>{});
 }
 function stopIGM(){
-  igm.pause();
-  igm.currentTime=0;
+  igm.pause();igm.currentTime=0;
+  ulm.pause();ulm.currentTime=0;
 }
 
 // Start menu music as soon as user interacts (autoplay policy)
