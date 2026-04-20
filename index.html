@@ -72,6 +72,34 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 #rotL{left:clamp(10px,2.4vw,18px)}
 #rotR{left:calc(clamp(10px,2.4vw,18px)*2 + clamp(52px,10vw,64px))}
 #rotL:active,#rotR:active,#rotL.held,#rotR.held{background:var(--acc);color:var(--bg)}
+
+/* Shop tabs */
+.shopTabs{display:flex;width:100%;max-width:380px;border:2px solid var(--brd);border-radius:6px;overflow:hidden;flex-shrink:0}
+.shopTab{flex:1;font-family:'Orbitron',monospace;font-size:clamp(.58rem,1.5vw,.75rem);font-weight:700;letter-spacing:.08em;padding:8px 4px;cursor:pointer;border:none;background:transparent;color:var(--dim);transition:all .15s}
+.shopTab.active{background:var(--acc);color:var(--bg)}
+/* Traits layout */
+#traitsPanel{display:none;flex-direction:row;gap:8px;width:100%;max-width:440px;height:clamp(280px,55vw,380px)}
+#traitsPanel.show{display:flex}
+/* Left: inventory */
+#traitInv{display:flex;flex-direction:column;gap:6px;width:clamp(70px,18vw,90px);flex-shrink:0}
+.tSlot{flex:1;border:2px solid var(--brd);border-radius:6px;background:var(--pan);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px;transition:border-color .15s;position:relative}
+.tSlot.active{border-color:var(--acc)}
+.tSlotLbl{font-family:'Share Tech Mono',monospace;font-size:clamp(.42rem,1.1vw,.55rem);color:var(--dim);letter-spacing:.1em}
+.tSlotName{font-family:'Share Tech Mono',monospace;font-size:clamp(.44rem,1.15vw,.58rem);text-align:center;word-break:break-word;font-weight:bold}
+/* Middle: roll area */
+#traitMid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 0}
+#traitDisplay{flex:1;display:flex;align-items:center;justify-content:center}
+#traitDisplayName{font-family:'Orbitron',monospace;font-size:clamp(.65rem,1.8vw,.9rem);font-weight:700;text-align:center;letter-spacing:.08em;padding:0 4px}
+/* Right: info panel */
+#traitInfo{width:clamp(90px,22vw,115px);display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+#rarityList{display:flex;flex-direction:column;gap:2px}
+.rarRow{font-family:'Share Tech Mono',monospace;font-size:clamp(.4rem,1.05vw,.54rem);display:flex;justify-content:space-between;gap:4px}
+#traitListWrap{flex:1;overflow-y:auto;border:1px solid var(--brd);border-radius:4px;background:var(--pan);padding:3px 5px;scrollbar-width:thin}
+.traitListItem{font-family:'Share Tech Mono',monospace;font-size:clamp(.38rem,.95vw,.5rem);line-height:1.7;white-space:nowrap}
+/* Confirm overlay */
+#traitConfirm{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:25}
+#traitConfirm.show{display:flex}
+.tcMsg{font-family:'Share Tech Mono',monospace;font-size:clamp(.7rem,1.9vw,.9rem);color:var(--txt);text-align:center;max-width:min(360px,85vw);line-height:1.7}
 </style>
 </head>
 <body>
@@ -92,7 +120,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="htop">
     <div><div class="hl" id="hR">ROOM 0</div><div class="hl hlg" id="hC">$0</div></div>
     <div id="anx"><div id="anxL">ANXIETY</div><div id="anxT"><div id="anxF"></div></div></div>
-    <div style="text-align:right"><div class="hl" id="hS">SPD x1.00</div><div class="hl" id="hUL" style="color:#ff4444;font-size:clamp(.5rem,1.3vw,.68rem);display:none">UPGRADELESS</div></div>
+    <div style="text-align:right"><div class="hl" id="hS">SPD x1.00</div><div class="hl" id="hUL" style="color:#ff4444;font-size:clamp(.5rem,1.3vw,.68rem);display:none">UPGRADELESS</div><div class="hl" id="hTL" style="font-size:clamp(.5rem,1.3vw,.68rem);display:none;background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">TRAITLESS</div></div>
   </div>
 </div>
 <button id="pb" class="h" aria-label="Pause">
@@ -146,6 +174,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="sr"><span>TOTAL COINS</span><input type="number" id="dTC" min="0" style="width:70px;background:var(--pan);border:1px solid var(--brd);color:var(--gold);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.8rem"></div>
   <div class="sr"><span>BEST ROOMS</span><input type="number" id="dBR" min="0" style="width:70px;background:var(--pan);border:1px solid var(--brd);color:var(--acc);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.8rem"></div>
   <div class="sr"><span>FULL BRIGHT</span><button class="tog" id="tFB"></button></div>
+  <div class="sr"><span>SLOT 1 TRAIT</span><select id="dT0" style="background:var(--pan);border:1px solid var(--brd);color:var(--acc);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.75rem;width:120px"></select></div>
+  <div class="sr"><span>SLOT 2 TRAIT</span><select id="dT1" style="background:var(--pan);border:1px solid var(--brd);color:var(--acc);font-family:'Share Tech Mono',monospace;padding:4px 6px;border-radius:3px;font-size:.75rem;width:120px"></select></div>
   <div style="display:flex;gap:10px">
     <button class="btn" id="dApply" style="min-width:0;padding:9px 20px;border-color:#ff9900;color:#ff9900">APPLY</button>
     <button class="btn" id="dBack" style="min-width:0;padding:9px 20px">BACK</button>
@@ -167,6 +197,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     </div>
   </div>
   <div class="sr"><span>UPGRADELESS MODE</span><button class="tog" id="tUL"></button></div>
+  <div class="sr"><span>TRAITLESS MODE</span><button class="tog" id="tTL"></button></div>
+  <div class="sr"><span style="font-size:.8em;color:var(--dim)">DISABLES TRAITS, RAINBOW OUTLINE</span></div>
   <div class="sr"><span style="font-size:.8em;color:var(--dim)">DISABLES ALL UPGRADES, TURNS BALL RED</span></div>
   <div style="display:flex;gap:8px;width:100%;max-width:380px">
     <input id="stCodeInput" type="text" placeholder="ENTER CODE"
@@ -183,14 +215,64 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 </div>
 <div id="sSh" class="scr h"><div class="ptl">SHOP</div>
   <div class="sr" style="font-family:'Share Tech Mono',monospace;font-size:clamp(.7rem,1.9vw,.88rem);color:var(--gold);">WALLET: $<span id="shW">0</span></div>
-  <div class="si"><div class="sin"><div class="sn">LIGHT DISTANCE</div><div class="sd">Extends flashlight reach +0.1% / level</div><div class="sl" id="ldL">LEVEL 0</div></div><button class="sb" id="bLD">$2</button></div>
-  <div class="si"><div class="sin"><div class="sn">LIGHT WIDTH</div><div class="sd">Widens flashlight cone +0.1% / level</div><div class="sl" id="laL">LEVEL 0</div></div><button class="sb" id="bLA">$3</button></div>
-  <div class="si"><div class="sin"><div class="sn">SPEED BOOST</div><div class="sd">Move faster +0.1% / level (max 100)</div><div class="sl" id="spL">LEVEL 0 / 100</div></div><button class="sb" id="bSP">$3</button></div>
-  <div class="si"><div class="sin"><div class="sn">MAX ANXIETY REFILL</div><div class="sd">Room clear refills +0.1% more per level</div><div class="sl" id="mxL">LEVEL 0</div></div><button class="sb" id="bMX">$4</button></div><br>
+  <div class="shopTabs">
+    <button class="shopTab active" id="tabUpg">UPGRADES</button>
+    <button class="shopTab" id="tabTrt">TRAITS</button>
+  </div>
+  <!-- UPGRADES PANEL -->
+  <div id="upgPanel" style="display:flex;flex-direction:column;gap:clamp(8px,2vw,12px);width:100%;max-width:380px">
+    <div class="si"><div class="sin"><div class="sn">LIGHT DISTANCE</div><div class="sd">Extends flashlight reach +0.1% / level</div><div class="sl" id="ldL">LEVEL 0</div></div><button class="sb" id="bLD">$2</button></div>
+    <div class="si"><div class="sin"><div class="sn">LIGHT WIDTH</div><div class="sd">Widens flashlight cone +0.1% / level</div><div class="sl" id="laL">LEVEL 0</div></div><button class="sb" id="bLA">$3</button></div>
+    <div class="si"><div class="sin"><div class="sn">SPEED BOOST</div><div class="sd">Move faster +0.1% / level (max 100)</div><div class="sl" id="spL">LEVEL 0 / 100</div></div><button class="sb" id="bSP">$3</button></div>
+    <div class="si"><div class="sin"><div class="sn">MAX ANXIETY REFILL</div><div class="sd">Room clear refills +0.1% more per level</div><div class="sl" id="mxL">LEVEL 0</div></div><button class="sb" id="bMX">$4</button></div>
+  </div>
+  <!-- TRAITS PANEL -->
+  <div id="traitsPanel">
+    <!-- Left: inventory -->
+    <div id="traitInv">
+      <div class="tSlot active" id="tSlot0" data-slot="0">
+        <div class="tSlotLbl">SLOT 1</div>
+        <div class="tSlotName" id="tSlotName0" style="color:var(--dim)">EMPTY</div>
+      </div>
+      <div class="tSlot" id="tSlot1" data-slot="1">
+        <div class="tSlotLbl">SLOT 2</div>
+        <div class="tSlotName" id="tSlotName1" style="color:var(--dim)">EMPTY</div>
+      </div>
+    </div>
+    <!-- Middle: display + roll -->
+    <div id="traitMid">
+      <div id="traitDisplay">
+        <div id="traitDisplayName" style="color:var(--dim)">ROLL TO GET A TRAIT</div>
+        <div id="traitDisplayFx" style="font-family:'Share Tech Mono',monospace;font-size:clamp(.42rem,1.05vw,.55rem);color:var(--dim);text-align:center;margin-top:4px;padding:0 4px"></div>
+      </div>
+      <button class="btn" id="bRoll" style="font-size:clamp(.6rem,1.6vw,.8rem);padding:clamp(8px,1.8vw,12px) clamp(16px,3.5vw,28px);min-width:0">ROLL $10</button>
+    </div>
+    <!-- Right: rarity + trait list -->
+    <div id="traitInfo">
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(.42rem,1.1vw,.55rem);color:var(--dim);letter-spacing:.1em;margin-bottom:2px">RARITY</div>
+      <div id="rarityList">
+        <div class="rarRow"><span style="color:#d0d0d0">COMMON</span><span style="color:#888">50%</span></div>
+        <div class="rarRow"><span style="color:#4caf50">UNCOMMON</span><span style="color:#888">30%</span></div>
+        <div class="rarRow"><span style="color:#2196f3">RARE</span><span style="color:#888">15%</span></div>
+        <div class="rarRow"><span style="color:#ffd700">LEGENDARY</span><span style="color:#888">4.5%</span></div>
+        <div class="rarRow"><span style="color:#ff4444">MYTHICAL</span><span style="color:#888">0.5%</span></div>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(.42rem,1.1vw,.55rem);color:var(--dim);letter-spacing:.1em;margin:3px 0 2px">TRAITS</div>
+      <div id="traitListWrap"></div>
+    </div>
+  </div>
   <button class="btn g" id="bShB">BACK</button>
 </div>
+<!-- Trait confirm overlay -->
+<div id="traitConfirm">
+  <div class="tcMsg" id="tcMsg">Are you sure you want to reroll?</div>
+  <div style="display:flex;gap:12px">
+    <button class="btn" id="tcYes" style="min-width:0;padding:9px 24px">YES</button>
+    <button class="btn r" id="tcNo" style="min-width:0;padding:9px 24px">NO</button>
+  </div>
+</div>
 <div id="sO" class="scr h"><div class="got">GAME OVER</div>
-  <div class="gos">ROOMS CLEARED: <span id="gR">0</span><br>BEST ROOMS: <span id="gBR">0</span><br>COINS THIS RUN: <span id="gC">$0</span><br>TOTAL COINS: <span id="gT">$0</span></div><div id="goUL" style="font-family:'Share Tech Mono',monospace;font-size:clamp(.58rem,1.5vw,.75rem);color:#ff4444;display:none;letter-spacing:.12em;margin-top:2px">UPGRADELESS RUN</div>
+  <div class="gos">ROOMS CLEARED: <span id="gR">0</span><br>BEST ROOMS: <span id="gBR">0</span><br>COINS THIS RUN: <span id="gC">$0</span><br>TOTAL COINS: <span id="gT">$0</span></div><div id="goUL" style="font-family:'Share Tech Mono',monospace;font-size:clamp(.58rem,1.5vw,.75rem);color:#ff4444;display:none;letter-spacing:.12em;margin-top:2px">UPGRADELESS RUN</div><div id="goTL" style="font-family:'Share Tech Mono',monospace;font-size:clamp(.58rem,1.5vw,.75rem);display:none;letter-spacing:.12em;margin-top:1px;background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">TRAITLESS RUN</div>
   <button class="btn" id="bRA">PLAY AGAIN</button><button class="btn r" id="bGM">MAIN MENU</button>
 </div>
 
@@ -214,8 +296,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 // SAVE / CONFIG
 // ============================================================
 const SK='br8s',CK='br8c';
-let sv={coins:0,ld:0,la:0,sp:0,mx:0,bestRooms:0,totalCoins:0,spCap:0,special:false};
-let cfg={dark:true,sens:1.5,volBGM:0.6,volIGM:0.55,fullBright:false,upgradeless:false,ctrl:'swipe'};
+let sv={coins:0,ld:0,la:0,sp:0,mx:0,bestRooms:0,totalCoins:0,spCap:0,special:false,traits:[null,null],activeSlot:0};
+let cfg={dark:true,sens:1.5,volBGM:0.6,volIGM:0.55,fullBright:false,upgradeless:false,ctrl:'swipe',traitless:false};
 // Load from current key, then check old keys and merge best values
 const OLD_KEYS=['br3s','br4s','br5s','br6s','br7s'];
 try{const d=JSON.parse(localStorage.getItem(SK));if(d)Object.assign(sv,d)}catch(e){}
@@ -275,10 +357,10 @@ const HH = RH + WT;
 // ============================================================
 // UPGRADES
 // ============================================================
-const getSpd  = ()=>{if(cfg.upgradeless)return 300;const lvl=sv.spCap>0?Math.min(sv.spCap,sv.sp):sv.sp;return 300*(1+lvl*.001)};
-const getLDist= ()=>cfg.upgradeless?100:100*(1+sv.ld*.001);
-const getLAng = ()=>cfg.upgradeless?Math.PI*.3:Math.PI*.3*(1+sv.la*.001);
-const getMaxAnxRefill=()=>cfg.upgradeless?0.25:0.25*(1+sv.mx*.001);
+const getSpd  = ()=>{if(cfg.upgradeless)return 300;const lvl=sv.spCap>0?Math.min(sv.spCap,sv.sp):sv.sp;const base=300*(1+lvl*.001);return base*(1+getTraitMods().spd)};
+const getLDist= ()=>{if(cfg.upgradeless)return 100;const base=100*(1+sv.ld*.001);return base*(1+getTraitMods().ld)};
+const getLAng = ()=>{if(cfg.upgradeless)return Math.PI*.3;const base=Math.PI*.3*(1+sv.la*.001);return base*(1+getTraitMods().la)};
+const getMaxAnxRefill=()=>{if(cfg.upgradeless)return 0.25;const base=0.25*(1+sv.mx*.001);return base*(1+getTraitMods().anx)};
 
 // ============================================================
 // MATH
@@ -789,7 +871,14 @@ function update(dt){
   if(anxiety<=0){endGame();return}
   for(const co of coins){
     if(co.got)continue;
-    if((player.x-co.x)**2+(player.y-co.y)**2<(BR+co.r)**2){co.got=true;sesCoins++;sv.coins++;sv.totalCoins++;wSv()}
+    if((player.x-co.x)**2+(player.y-co.y)**2<(BR+co.r)**2){
+      co.got=true;
+      const tm=getTraitMods();
+      if(!tm.noCoin){
+        const gain=tm.coinMult;
+        sesCoins+=gain;sv.coins+=gain;sv.totalCoins+=gain;wSv();
+      }
+    }
   }
   for(const rm of rooms){
     if(rm.passed)continue;
@@ -813,6 +902,7 @@ function hudUp(){
   document.getElementById('hC').textContent='$'+sesCoins;
   document.getElementById('hS').textContent='SPD x'+(1+sv.sp*.001).toFixed(2);
   document.getElementById('hUL').style.display=cfg.upgradeless?'block':'none';
+  document.getElementById('hTL').style.display=cfg.traitless?'block':'none';
   const f=document.getElementById('anxF');
   f.style.width=(anxiety*100)+'%';
   f.style.background=anxiety>.55?'var(--acc2)':anxiety>.28?'#ffaa00':'var(--red)';
@@ -923,7 +1013,7 @@ function drawBall(inv){
   const g=ctx.createRadialGradient(px-pr*.28,py-pr*.3,pr*.04,px,py,pr);
   if(cfg.upgradeless){g.addColorStop(0,'#ff7070');g.addColorStop(.5,'#cc1122');g.addColorStop(1,'#660008');}else{g.addColorStop(0,'#7ab4ff');g.addColorStop(.5,'#2055cc');g.addColorStop(1,'#091c66');}
   ctx.beginPath();ctx.arc(px,py,pr,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
-  ctx.strokeStyle=cfg.upgradeless?'rgba(255,120,120,.6)':'rgba(120,180,255,.6)';ctx.lineWidth=inv*2;ctx.stroke();
+  ctx.strokeStyle=getBallOutlineCol(Date.now());ctx.lineWidth=inv*2.5;ctx.stroke();
   ctx.beginPath();ctx.ellipse(px-pr*.22,py-pr*.27,pr*.21,pr*.12,-.5,0,Math.PI*2);
   ctx.fillStyle='rgba(255,255,255,.26)';ctx.fill();
   const fx=Math.cos(md),fy=Math.sin(md),rx=-fy,ry=fx;
@@ -1108,6 +1198,7 @@ function openDebug(){
   document.getElementById('dTC').value=sv.totalCoins;
   document.getElementById('dBR').value=sv.bestRooms;
   document.getElementById('tFB').classList.toggle('on',cfg.fullBright);
+  populateDebugTraits();
   showScr('sDbg');
 }
 
@@ -1119,7 +1210,10 @@ document.getElementById('dApply').onclick=()=>{
   sv.coins=Math.max(0,parseInt(document.getElementById('dCC').value)||0);
   sv.totalCoins=Math.max(0,parseInt(document.getElementById('dTC').value)||0);
   sv.bestRooms=Math.max(0,parseInt(document.getElementById('dBR').value)||0);
+  sv.traits[0]=document.getElementById('dT0').value||null;
+  sv.traits[1]=document.getElementById('dT1').value||null;
   wSv();
+  updateSlotUI();
   alert('Applied!');
 };
 document.getElementById('tFB').onclick=function(){
@@ -1144,6 +1238,7 @@ if(!cfg.usedCodes)cfg.usedCodes=[];
 
 const CODES={
   'JustGiveMeMyMoneh':{type:'coins',amount:33},
+  'Traits':{type:'coins',amount:30},
   'jajUHntsgwjJwgKv': {type:'expired'},
 };
 
@@ -1198,6 +1293,237 @@ function redeemFromSettings(){
   else if(def.type==='special'){sv.special=true;wSv();updateDebugVisibility();showNotif('CODE REDEEMED: SPECIAL PLAYER UNLOCKED','ok');}
 }
 // ============================================================
+
+// ============================================================
+// TRAITS SYSTEM
+// ============================================================
+const RARITY_COLS={common:'#d0d0d0',uncommon:'#4caf50',rare:'#2196f3',legendary:'#ffd700',mythical:'#ff4444'};
+const RARITY_WEIGHTS={common:50,uncommon:30,rare:15,legendary:4.5,mythical:0.5};
+const RARITY_ORDER=['common','uncommon','rare','legendary','mythical'];
+
+// All traits — name + rarity + outline color for ball
+const ALL_TRAITS=[
+  // COMMON
+  {id:'survivor',name:'Survivor',rarity:'common',col:'#d0d0d0',spd:0,ld:0,la:0,anx:0.05,coinMult:1,noCoin:false,fx:'+5% anxiety refill'},
+  {id:'tanky',name:'Tanky',rarity:'common',col:'#c0c0c0',spd:-0.10,ld:0,la:0,anx:0.10,coinMult:1,noCoin:false,fx:'+10% anxiety refill, -10% speed'},
+  {id:'shimmering',name:'Shimmering',rarity:'common',col:'#e0e0e0',spd:0,ld:0.05,la:0,anx:0,coinMult:1,noCoin:false,fx:'+5% light distance'},
+  {id:'boulder',name:'Boulder',rarity:'common',col:'#b0b0b0',spd:-0.15,ld:0,la:0,anx:0,coinMult:1,noCoin:false,fx:'-15% speed'},
+  {id:'grateful_human',name:'Grateful Human',rarity:'common',col:'#c8c8c8',spd:0,ld:0,la:0,anx:0,coinMult:1,noCoin:true,fx:'No coin gain'},
+  {id:'scaredy_cat',name:'Scaredy Cat',rarity:'common',col:'#bbbbbb',spd:0,ld:0,la:0,anx:-0.10,coinMult:1,noCoin:false,fx:'-10% anxiety refill'},
+  // UNCOMMON
+  {id:'gentle_pickpocket',name:'Gentle Pickpocket',rarity:'uncommon',col:'#4caf50',spd:-0.40,ld:0,la:0,anx:0,coinMult:2,noCoin:false,fx:'x2 coins, -40% speed'},
+  {id:'smooth_feet',name:'Smooth Feet',rarity:'uncommon',col:'#66bb6a',spd:0.10,ld:0,la:0,anx:0,coinMult:1,noCoin:false,fx:'+10% speed'},
+  {id:'gifted_eyes',name:'Gifted Eyes',rarity:'uncommon',col:'#81c784',spd:0,ld:0.10,la:0,anx:0,coinMult:1,noCoin:false,fx:'+10% light distance'},
+  {id:'talented_human',name:'Talented Human',rarity:'uncommon',col:'#a5d6a7',spd:0.03,ld:0,la:0.03,anx:0.03,coinMult:1,noCoin:false,fx:'+3% speed, +3% light width, +3% anxiety refill'},
+  // RARE
+  {id:'four_eyes',name:'Four Eyes',rarity:'rare',col:'#2196f3',spd:0,ld:0.08,la:0.07,anx:0,coinMult:1,noCoin:false,fx:'+8% light distance, +7% light width'},
+  {id:'pure_greed',name:'Pure Greed',rarity:'rare',col:'#42a5f5',spd:0,ld:0,la:0,anx:0,coinMult:2,noCoin:false,fx:'x2 coins'},
+  // LEGENDARY
+  {id:'athletic_speedster',name:'Athletic Speedster',rarity:'legendary',col:'#ffd700',spd:0.20,ld:0,la:0,anx:0,coinMult:1,noCoin:false,fx:'+20% speed'},
+  {id:'spider_sense',name:'Spider Sense',rarity:'legendary',col:'#ffca28',spd:0,ld:0.20,la:0,anx:0,coinMult:1,noCoin:false,fx:'+20% light distance'},
+  {id:'professional_pickpocket',name:'Professional Pickpocket',rarity:'legendary',col:'#ffe082',spd:0.10,ld:0,la:0,anx:0,coinMult:2,noCoin:false,fx:'x2 coins, +10% speed'},
+  // MYTHICAL
+  {id:'jack_of_all_trades',name:'Jack of All Trades',rarity:'mythical',col:'#ff4444',spd:0.10,ld:0.12,la:0.12,anx:0.10,coinMult:1,noCoin:false,fx:'+12% LD, +12% LW, +10% speed, +10% anxiety refill'},
+  {id:'sonic_racer',name:'Sonic Racer',rarity:'mythical',col:'#ff6b6b',spd:0.50,ld:0,la:0,anx:0,coinMult:1,noCoin:false,fx:'+50% speed'},
+  {id:'fear_crusher',name:'Fear Crusher',rarity:'mythical',col:'#ff8a80',spd:0,ld:0,la:0,anx:0.35,coinMult:1,noCoin:false,fx:'+35% anxiety refill'},
+  {id:'reflex_master',name:'Reflex Master',rarity:'mythical',col:'#ff5252',spd:0,ld:0,la:2.00,anx:0,coinMult:1,noCoin:false,fx:'+200% light width'},
+  {id:'eyes_of_snipers',name:'Eyes of Snipers',rarity:'mythical',col:'#ff1744',spd:0,ld:1.50,la:-0.15,anx:0,coinMult:1,noCoin:false,fx:'+150% light distance, -15% light width'},
+];
+const TRAIT_MAP={};
+for(const t of ALL_TRAITS)TRAIT_MAP[t.id]=t;
+
+function getTraitMods(){
+  // Returns combined mods from both equipped slots (add together)
+  if(cfg.traitless)return{spd:0,ld:0,la:0,anx:0,coinMult:1,noCoin:false};
+  let spd=0,ld=0,la=0,anx=0,coinMult=1,noCoin=false;
+  for(let i=0;i<2;i++){
+    const t=sv.traits[i]?TRAIT_MAP[sv.traits[i]]:null;
+    if(!t)continue;
+    spd+=t.spd;ld+=t.ld;la+=t.la;anx+=t.anx;
+    if(t.coinMult>1)coinMult=Math.max(coinMult,t.coinMult);
+    if(t.noCoin)noCoin=true;
+  }
+  return{spd,ld,la,anx,coinMult,noCoin};
+}
+
+function rollRarity(){
+  const r=Math.random()*100;
+  let cum=0;
+  for(const rar of RARITY_ORDER){
+    cum+=RARITY_WEIGHTS[rar];
+    if(r<cum)return rar;
+  }
+  return 'common';
+}
+function rollTrait(){
+  const rar=rollRarity();
+  const pool=ALL_TRAITS.filter(t=>t.rarity===rar);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+// Active slot index (0 or 1)
+let activeTraitSlot=sv.activeSlot||0;
+let rollAnimTimer=null;
+let pendingRollConfirm=false;
+
+function getActiveTrait(){
+  if(cfg.traitless)return null;
+  const key=sv.traits[activeTraitSlot];
+  return key?TRAIT_MAP[key]:null;
+}
+function getBallOutlineCol(time){
+  // Returns color string for ball outline
+  if(cfg.traitless){
+    // Rainbow cycle
+    const hue=((time||Date.now())/20)%360;
+    return `hsl(${hue},100%,60%)`;
+  }
+  if(cfg.upgradeless)return'rgba(255,120,120,.8)';
+  // Check both slots — if active slot has trait use it, else other slot
+  for(let i=0;i<2;i++){
+    const key=sv.traits[activeTraitSlot===0?i:(1-i)];
+    if(key&&TRAIT_MAP[key])return TRAIT_MAP[key].col;
+  }
+  return'rgba(120,180,255,.7)';
+}
+
+function updateSlotUI(){
+  for(let i=0;i<2;i++){
+    const el=document.getElementById('tSlot'+i);
+    const nm=document.getElementById('tSlotName'+i);
+    const t=sv.traits[i]?TRAIT_MAP[sv.traits[i]]:null;
+    el.classList.toggle('active',i===activeTraitSlot);
+    if(t){nm.textContent=t.name;nm.style.color=RARITY_COLS[t.rarity];}
+    else{nm.textContent='EMPTY';nm.style.color='var(--dim)';}
+  }
+  // Update display name to active slot trait
+  const act=sv.traits[activeTraitSlot]?TRAIT_MAP[sv.traits[activeTraitSlot]]:null;
+  const dn=document.getElementById('traitDisplayName');
+  const dfx=document.getElementById('traitDisplayFx');
+  if(act){
+    dn.textContent=act.name;dn.style.color=RARITY_COLS[act.rarity];
+    dfx.textContent=act.fx;dfx.style.color=RARITY_COLS[act.rarity];
+  } else {
+    dn.textContent='ROLL TO GET A TRAIT';dn.style.color='var(--dim)';
+    dfx.textContent='';
+  }
+}
+
+function buildTraitList(){
+  const wrap=document.getElementById('traitListWrap');
+  wrap.innerHTML='';
+  for(const rar of RARITY_ORDER){
+    const pool=ALL_TRAITS.filter(t=>t.rarity===rar);
+    for(const t of pool){
+      const d=document.createElement('div');
+      d.className='traitListItem';
+      d.innerHTML=`<span style="color:${RARITY_COLS[rar]}">${t.name}</span><span style="color:#555"> - ${rar}</span>`;
+      wrap.appendChild(d);
+    }
+  }
+}
+
+// Roll animation
+function doRoll(){
+  if(sv.coins<10){showNotif('NOT ENOUGH COINS','fail');return}
+  const cur=sv.traits[activeTraitSlot]?TRAIT_MAP[sv.traits[activeTraitSlot]]:null;
+  if(cur&&(cur.rarity==='legendary'||cur.rarity==='mythical')){
+    // Ask confirmation
+    document.getElementById('tcMsg').textContent='You have a '+cur.rarity.toUpperCase()+' trait "'+cur.name+'". Reroll it?';
+    document.getElementById('traitConfirm').classList.add('show');
+    pendingRollConfirm=true;
+    return;
+  }
+  executeRoll();
+}
+
+function executeRoll(){
+  if(sv.coins<10){showNotif('NOT ENOUGH COINS','fail');return}
+  sv.coins-=10;wSv();
+  document.getElementById('shW').textContent=sv.coins;
+  const dn=document.getElementById('traitDisplayName');
+  const bRoll=document.getElementById('bRoll');
+  bRoll.disabled=true;
+  // Animate: fast fake rolls slowing down to final
+  const totalDur=2000;
+  const startTime=Date.now();
+  let lastFlip=0;
+  let interval=60; // ms between flips (starts fast)
+  function animate(){
+    const elapsed=Date.now()-startTime;
+    const progress=elapsed/totalDur;
+    // Slow down: interval grows from 60ms to 400ms
+    interval=60+progress*340;
+    if(elapsed-lastFlip>=interval){
+      lastFlip=elapsed;
+      const fake=rollTrait();
+      dn.textContent=fake.name;
+      dn.style.color=RARITY_COLS[fake.rarity];
+    }
+    if(elapsed<totalDur){
+      rollAnimTimer=requestAnimationFrame(animate);
+    } else {
+      // Final result
+      const result=rollTrait();
+      sv.traits[activeTraitSlot]=result.id;
+      wSv();
+      dn.textContent=result.name;
+      dn.style.color=RARITY_COLS[result.rarity];
+      document.getElementById('traitDisplayFx').textContent=result.fx;
+      document.getElementById('traitDisplayFx').style.color=RARITY_COLS[result.rarity];
+      updateSlotUI();
+      bRoll.disabled=false;
+      // Update debug selects if open
+      if(document.getElementById('sDbg')&&!document.getElementById('sDbg').classList.contains('h'))populateDebugTraits();
+    }
+  }
+  rollAnimTimer=requestAnimationFrame(animate);
+}
+
+document.getElementById('tcYes').onclick=()=>{
+  document.getElementById('traitConfirm').classList.remove('show');
+  if(pendingRollConfirm){pendingRollConfirm=false;executeRoll();}
+};
+document.getElementById('tcNo').onclick=()=>{
+  document.getElementById('traitConfirm').classList.remove('show');
+  pendingRollConfirm=false;
+};
+
+// Shop tab switching
+document.getElementById('tabUpg').onclick=()=>{
+  document.getElementById('tabUpg').classList.add('active');
+  document.getElementById('tabTrt').classList.remove('active');
+  document.getElementById('upgPanel').style.display='flex';
+  document.getElementById('traitsPanel').classList.remove('show');
+};
+document.getElementById('tabTrt').onclick=()=>{
+  document.getElementById('tabTrt').classList.add('active');
+  document.getElementById('tabUpg').classList.remove('active');
+  document.getElementById('upgPanel').style.display='none';
+  document.getElementById('traitsPanel').classList.add('show');
+  updateSlotUI();buildTraitList();
+};
+
+// Slot selection
+for(let i=0;i<2;i++){
+  document.getElementById('tSlot'+i).onclick=()=>{
+    activeTraitSlot=i;sv.activeSlot=i;wSv();
+    updateSlotUI();
+  };
+}
+
+document.getElementById('bRoll').onclick=doRoll;
+
+// Debug trait selects
+function populateDebugTraits(){
+  for(let i=0;i<2;i++){
+    const sel=document.getElementById('dT'+i);
+    if(!sel)continue;
+    const cur=sv.traits[i]||'';
+    sel.innerHTML='<option value="">EMPTY</option>'+ALL_TRAITS.map(t=>`<option value="${t.id}"${t.id===cur?' selected':''}>${t.name} (${t.rarity})</option>`).join('');
+  }
+}
+
 // UI WIRING
 // ============================================================
 document.getElementById('bPlay').onclick=go;
@@ -1210,6 +1536,7 @@ document.getElementById('bRes').onclick=doResume;
 document.getElementById('bPM').onclick=goMenu;
 document.getElementById('bSet').onclick=()=>{
   updateDebugVisibility();
+  document.getElementById('tTL').classList.toggle('on',cfg.traitless);
   document.getElementById('tUL').classList.toggle('on',cfg.upgradeless);
   document.getElementById('stCodeInput').value='';
   updateCtrlToggle();
@@ -1252,6 +1579,7 @@ document.querySelectorAll('.ctrlOpt').forEach(b=>{
   b.onclick=()=>{cfg.ctrl=b.dataset.ctrl;updateCtrlToggle();wCfg()};
 });
 document.getElementById('tDark').onclick=function(){cfg.dark=!cfg.dark;this.classList.toggle('on',cfg.dark);applyTheme();wCfg()};
+document.getElementById('tTL').onclick=function(){cfg.traitless=!cfg.traitless;this.classList.toggle('on',cfg.traitless);wCfg()};
 document.getElementById('tUL').onclick=function(){cfg.upgradeless=!cfg.upgradeless;this.classList.toggle('on',cfg.upgradeless);wCfg()};
 document.getElementById('rS').oninput=function(){cfg.sens=parseFloat(this.value);document.getElementById('sV').textContent=cfg.sens.toFixed(1);wCfg()};
 document.getElementById('rBGM').oninput=function(){cfg.volBGM=parseFloat(this.value);bgm.volume=cfg.volBGM;wCfg()};
