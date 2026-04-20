@@ -357,10 +357,10 @@ const HH = RH + WT;
 // ============================================================
 // UPGRADES
 // ============================================================
-const getSpd  = ()=>{if(cfg.upgradeless)return 300;const lvl=sv.spCap>0?Math.min(sv.spCap,sv.sp):sv.sp;const base=300*(1+lvl*.001);return base*(1+getTraitMods().spd)};
-const getLDist= ()=>{if(cfg.upgradeless)return 100;const base=100*(1+sv.ld*.001);return base*(1+getTraitMods().ld)};
-const getLAng = ()=>{if(cfg.upgradeless)return Math.PI*.3;const base=Math.PI*.3*(1+sv.la*.001);return base*(1+getTraitMods().la)};
-const getMaxAnxRefill=()=>{if(cfg.upgradeless)return 0.25;const base=0.25*(1+sv.mx*.001);return base*(1+getTraitMods().anx)};
+const getSpd  = ()=>{const lvl=cfg.upgradeless?0:(sv.spCap>0?Math.min(sv.spCap,sv.sp):sv.sp);return 300*(1+lvl*.001)*(1+getTraitMods().spd)};
+const getLDist= ()=>{const lvl=cfg.upgradeless?0:sv.ld;return 100*(1+lvl*.001)*(1+getTraitMods().ld)};
+const getLAng = ()=>{const lvl=cfg.upgradeless?0:sv.la;return Math.PI*.3*(1+lvl*.001)*(1+getTraitMods().la)};
+const getMaxAnxRefill=()=>{const lvl=cfg.upgradeless?0:sv.mx;return 0.25*(1+lvl*.001)*(1+getTraitMods().anx)};
 
 // ============================================================
 // MATH
@@ -1333,17 +1333,11 @@ const TRAIT_MAP={};
 for(const t of ALL_TRAITS)TRAIT_MAP[t.id]=t;
 
 function getTraitMods(){
-  // Returns combined mods from both equipped slots (add together)
+  // Only the ACTIVE slot's trait applies — slots are loadouts, not stacks
   if(cfg.traitless)return{spd:0,ld:0,la:0,anx:0,coinMult:1,noCoin:false};
-  let spd=0,ld=0,la=0,anx=0,coinMult=1,noCoin=false;
-  for(let i=0;i<2;i++){
-    const t=sv.traits[i]?TRAIT_MAP[sv.traits[i]]:null;
-    if(!t)continue;
-    spd+=t.spd;ld+=t.ld;la+=t.la;anx+=t.anx;
-    if(t.coinMult>1)coinMult=Math.max(coinMult,t.coinMult);
-    if(t.noCoin)noCoin=true;
-  }
-  return{spd,ld,la,anx,coinMult,noCoin};
+  const t=sv.traits[activeTraitSlot]?TRAIT_MAP[sv.traits[activeTraitSlot]]:null;
+  if(!t)return{spd:0,ld:0,la:0,anx:0,coinMult:1,noCoin:false};
+  return{spd:t.spd,ld:t.ld,la:t.la,anx:t.anx,coinMult:t.coinMult,noCoin:t.noCoin};
 }
 
 function rollRarity(){
